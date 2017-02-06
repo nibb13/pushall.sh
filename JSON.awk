@@ -34,10 +34,10 @@ BEGIN { #{{{
 	# filepathnames from stdin
 	# usage: echo -e "file1\nfile2\n" | awk -f JSON.awk
 	# usage: { echo -; echo; cat; } | awk -f JSON.awk
-	while (getline ARGV[++ARGC] < "/dev/stdin") {
-		if (ARGV[ARGC] == "")
-			break
-	}
+	#while (getline ARGV[++ARGC] < "/dev/stdin") {
+	#	if (ARGV[ARGC] == "")
+	#		break
+	#}
 	# set file slurping mode
 	srand(); RS="n/o/m/a/t/c/h" rand()
 }
