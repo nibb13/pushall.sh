@@ -4,7 +4,7 @@ POSIX-shell implementation of [pushall.ru API](https://pushall.ru/blog/api).
 
 ## Features
 
-*to be filled*
+* Self API
 
 ## Requirements
 
