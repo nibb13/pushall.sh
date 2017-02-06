@@ -32,11 +32,11 @@ Any mentions, suggestions, pull-requests, bug reports, usage reports etc. are we
 
 ## Thanks
 
-[PushAll staff](https://pushall.ru) for nice service.  
+[PushAll](https://pushall.ru) staff for nice service.  
 [D-Link](http://dlink.com) for outstanding hardware.
 
 ## Contacts
 
 <nibble@list.ru>  
 
-Last update: 05.02.2017
+Last update: 06.02.2017
