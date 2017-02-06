@@ -2,6 +2,8 @@
 
 POSIX-shell implementation of [pushall.ru API](https://pushall.ru/blog/api).
 
+v. 0.0.1-alpha
+
 ## Features
 
 * Self API
