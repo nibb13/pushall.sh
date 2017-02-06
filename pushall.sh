@@ -90,11 +90,11 @@ _usage () {
 	_print -e "\t-h\tThis usage help"
 	_print
 	_print "Options for self API:"
-	_print -e "\t-t\tPush message title"
-	_print -e "\t-T\tPush message text"
+	_print -e "\t-t\tPush message title (required)"
+	_print -e "\t-T\tPush message text (required)"
 	_print -e "\t-i\tPush message icon"
-	_print -e "\t-I\tYour pushall account ID"
-	_print -e "\t-K\tYour pushall account key"
+	_print -e "\t-I\tYour pushall account ID (required)"
+	_print -e "\t-K\tYour pushall account key (required)"
 	_print -e "\t-u\tPush message URL"
 	_print -e "\t-H\tHide option for push message"
 	_print -e "\t-e\tPush message encoding"
@@ -159,16 +159,6 @@ _parse_options () {
     
 }
 
-
-#TITLE;
-#TEXT;
-#ICON;
-#URL;
-#HIDDEN;
-#ENCODE;
-#PRIORITY;
-#TTL;
-
 _self_api_call () {
 
 	if [ ! "$TITLE" ]; then
@@ -210,34 +200,36 @@ _self_api_call () {
 		PARAMLINE="$PARAMLINE&ttl=$TTL"
 	fi
 	
-	_print_err "DEBUG: Param line: \"$PARAMLINE\""
-	
 	CURLARGS="-sS -d \"$PARAMLINE\" -X POST \"https://pushall.ru/api.php?type=self\""
-	#CURLARGS="-sS -d \"$PARAMLINE\" -X POST 'https://nonexistent/api.php?type=self'"
 	
 	if [ "$CA_BUNDLE" ]; then
 		CURLARGS="$CURLARGS --cacert \"$CA_BUNDLE\""
 	fi
 	
-	_print_err "DEBUG: Curl exec line: \"curl $CURLARGS\""
-	
 	# Calling curl & capturing stdout, stderr and exit code using
 	# tagging approach by Warbo, ref: http://stackoverflow.com/a/37602314
 	CURLOUT=$({ { eval curl $CURLARGS; echo -e "EXITSTATUS:$?" >&2; } | sed -e 's/^/STDOUT:/g'; } 2>&1)
 	CURLEXITSTATUS=$(_print "$CURLOUT" | grep "^EXITSTATUS:" | sed -e 's/^EXITSTATUS://g')
+#	CURLOUT="STDOUT:{\"success\":1,\"lid\":6546002}"
+#	CURLEXITSTATUS=0
 	CURLSTDOUT=$(_print "$CURLOUT" | grep "^STDOUT:" | grep -v "^EXITSTATUS:" | sed -e 's/^STDOUT://g')
 	CURLSTDERR=$(_print "$CURLOUT" | grep -v "^STDOUT:\|^EXITSTATUS:")
 	
-	#_print_err "DEBUG: curl full out: $CURLOUT"
-	_print_err "DEBUG: curl stdout: $CURLSTDOUT"
-	#_print_err "DEBUG: curl exit code: $CURLEXITSTATUS"
 	if [ $CURLEXITSTATUS -ne 0 ]; then
 		_print_err -e "Error in curl: $CURLSTDERR"
 		exit 1;
+	else
+		CURLPARSED=$(_print "$CURLSTDOUT" | ./JSON.awk)
+		PUSHALL_ERROR=$(_print "$CURLPARSED" | grep "\[\"error\"\]" | sed 's/.*\t"\?\(.*\)[^\\]"\?/\1/')
+		if [ "$PUSHALL_ERROR" ]; then
+			_print_err "API returned error: $PUSHALL_ERROR"
+			exit 1;
+		fi
+		LID=$(_print "$CURLPARSED" | grep "\[\"lid\"\]" | sed 's/.*\t"\?\(.*\)[^\\]"\?/\1/')
+		_print "$LID"
+		exit 0;
 	fi
 	
-	_print_err "Not implemented!"
-
 }
 
 _init
