@@ -88,6 +88,8 @@ _usage () {
 	_print
 	_print "COMMAND can be:"
 	_print -e "\t\tsend or empty - send specified API call"
+	_print -e "\t\tqueue - store specified API call in sending queue"
+	_print -e "\t\trun - run sending queue respecting all timeouts"
 	_print
 	_print "General options:"
 	_print -e "\t-b\tCA bundle path for curl"
@@ -221,6 +223,50 @@ _self_api_call () {
 	
 }
 
+_self_api_queue () {
+
+	_print "self/::/$PUSHALL_ID/::/$PUSHALL_KEY/::/$TITLE/::/$TEXT/::/$ICON/::/$URL/::/$HIDDEN/::/$ENCODE/::/$PRIORITY/::/$TTL/::/$CA_BUNDLE" >> "$XDG_DATA_HOME/$CONF_SCRIPT_DIR/queue.txt"
+	
+}
+
+_queue_run() {
+
+	while read -r _line
+	do
+		# TODO: Find a better way for this:
+		_api=$(echo "$_line" | awk -F"/::/" '{print $1}')
+		PUSHALL_ID=$(echo "$_line" | awk -F"/::/" '{print $2}')
+		PUSHALL_KEY=$(echo "$_line" | awk -F"/::/" '{print $3}')
+		TITLE=$(echo "$_line" | awk -F"/::/" '{print $4}')
+		TEXT=$(echo "$_line" | awk -F"/::/" '{print $5}')
+		ICON=$(echo "$_line" | awk -F"/::/" '{print $6}')
+		URL=$(echo "$_line" | awk -F"/::/" '{print $7}')
+		HIDDEN=$(echo "$_line" | awk -F"/::/" '{print $8}')
+		ENCODE=$(echo "$_line" | awk -F"/::/" '{print $9}')
+		PRIORITY=$(echo "$_line" | awk -F"/::/" '{print $10}')
+		TTL=$(echo "$_line" | awk -F"/::/" '{print $11}')
+		CA_BUNDLE=$(echo "$_line" | awk -F"/::/" '{print $12}')
+		case "$_api" in
+			[Ss][Ee][Ll][Ff])
+				while true; do
+					if [ ! "$SELF_LAST" ] || [ $(($(date +%s) - $SELF_LAST)) -gt 3 ]; then
+						break
+					fi
+					sleep 1;
+				done
+				_self_api_check && _self_api_call && SELF_LAST=$(date +%s)
+			;;
+			*)
+				_print_err "Unknown API: \"$PUSHALL_API\""
+			;;
+		esac
+		sed -i 1d "$XDG_DATA_HOME/$CONF_SCRIPT_DIR/queue.txt"
+	done < "$XDG_DATA_HOME/$CONF_SCRIPT_DIR/queue.txt"
+
+	return 0;
+
+}
+
 _self_api_check() {
 
 	if [ ! "$TITLE" ]; then
@@ -266,6 +312,18 @@ case "$COMMAND" in
 		esac
 	;;
 	[Qq][Uu][Ee][Uu][Ee])
+		case "$PUSHALL_API" in
+			[Ss][Ee][Ll][Ff])
+				_self_api_check && _self_api_queue
+			;;
+			*)
+				_print_err "Unknown API: \"$PUSHALL_API\""
+				exit 1;
+			;;
+		esac
+	;;
+	[Rr][Uu][Nn])
+		_queue_run
 	;;
 	*)
 		_print_err "Unknown command: \"$COMMAND\""
