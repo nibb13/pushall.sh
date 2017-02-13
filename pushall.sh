@@ -9,6 +9,7 @@ _check_cmd () {
 _init () {
 
 	CONF_SCRIPT_DIR=".pushall.sh";
+	SCRIPT_DIR=$(dirname "$0")
 
 	if [ ! "$XDG_CONFIG_HOME" ]; then
 		XDG_CONFIG_HOME=~/.config;
@@ -205,7 +206,7 @@ _self_api_call () {
 		_print_err -e "Error in curl: $CURLSTDERR"
 		exit 1;
 	else
-		CURLPARSED=$(_print "$CURLSTDOUT" | ./JSON.awk)
+		CURLPARSED=$(_print "$CURLSTDOUT" | $SCRIPT_DIR/JSON.awk)
 		PUSHALL_ERROR=$(_print "$CURLPARSED" | grep "\[\"error\"\]" | sed 's/.*\t"\?\(.*\)[^\\]"\?/\1/')
 		if [ "$PUSHALL_ERROR" ]; then
 			_print_err "API returned error: $PUSHALL_ERROR"
