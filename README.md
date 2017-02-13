@@ -2,11 +2,12 @@
 
 POSIX-shell implementation of [pushall.ru API](https://pushall.ru/blog/api).
 
-v. 0.0.1-alpha
+v. 0.1.0-alpha
 
 ## Features
 
 * Self API
+* Queueing
 
 ## Requirements
 
@@ -41,4 +42,4 @@ Any mentions, suggestions, pull-requests, bug reports, usage reports etc. are we
 
 <nibble@list.ru>  
 
-Last update: 06.02.2017
+Last update: 13.02.2017
