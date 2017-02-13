@@ -52,13 +52,13 @@ _print () {
 	fi
 
 	if [ ! "$2" ]; then
-		PRINT_ARG=$1;
+		PRINT_ARG="$1";
 	else
-		PRINT_MOD=$1;
-		PRINT_ARG=$2;
+		PRINT_MOD="$1";
+		PRINT_ARG="$2";
 	fi
 
-	case $PRINT_MOD in
+	case "$PRINT_MOD" in
 		-e)
 			$PRINT_E "$PRINT_ARG"
 		;;
@@ -199,7 +199,7 @@ _self_api_call () {
 	
 	# Calling curl & capturing stdout, stderr and exit code using
 	# tagging approach by Warbo, ref: http://stackoverflow.com/a/37602314
-	CURLOUT=$({ { eval curl $CURLARGS; echo -e "EXITSTATUS:$?" >&2; } | sed -e 's/^/STDOUT:/g'; } 2>&1)
+	CURLOUT=$({ { eval "curl $CURLARGS"; echo -e "EXITSTATUS:$?" >&2; } | sed -e 's/^/STDOUT:/g'; } 2>&1)
 	CURLEXITSTATUS=$(_print "$CURLOUT" | grep "^EXITSTATUS:" | sed -e 's/^EXITSTATUS://g')
 #	CURLOUT="STDOUT:{\"success\":1,\"lid\":6546002}"
 #	CURLEXITSTATUS=0
