@@ -17,6 +17,10 @@ _init () {
 	if [ ! "$XDG_DATA_HOME" ]; then
 		XDG_DATA_HOME=~/.local/share;
 	fi
+	
+	if [ ! -d "$XDG_DATA_HOME/$CONF_SCRIPT_DIR" ]; then
+		mkdir -p "$XDG_DATA_HOME/$CONF_SCRIPT_DIR";
+	fi
     
 	if [ $(_check_cmd printf) ]; then
 		PRINT="printf %s\n";
@@ -257,6 +261,8 @@ case "$COMMAND" in
 				exit 1;
 			;;
 		esac
+	;;
+	[Qq][Uu][Ee][Uu][Ee])
 	;;
 	*)
 		_print_err "Unknown command: \"$COMMAND\""
