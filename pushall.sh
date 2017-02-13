@@ -161,24 +161,6 @@ _parse_options () {
 
 _self_api_call () {
 
-	if [ ! "$TITLE" ]; then
-		_print_err "Title (-t) is required for self API call"
-	exit 1;
-	fi
-	
-	if [ ! "$TEXT" ]; then
-		_print_err "Text (-T) is required for self API call"
-	exit 1;
-	fi
-	if [ ! "$PUSHALL_ID" ]; then
-		_print_err "Pushall ID (-I) is required for self API call"
-	exit 1;
-	fi
-	if [ ! "$PUSHALL_KEY" ]; then
-		_print_err "Pushall key (-K) is required for self API call"
-	exit 1;
-	fi
-	
 	PARAMLINE="id=$PUSHALL_ID&key=$PUSHALL_KEY&title=$TITLE&text=$TEXT"
 	
 	if [ "$ICON" ]; then
@@ -232,6 +214,32 @@ _self_api_call () {
 	
 }
 
+_self_api_check() {
+
+	if [ ! "$TITLE" ]; then
+		_print_err "Title (-t) is required for self API call"
+		return 1;
+	fi
+	
+	if [ ! "$TEXT" ]; then
+		_print_err "Text (-T) is required for self API call"
+		return 1;
+	fi
+	
+	if [ ! "$PUSHALL_ID" ]; then
+		_print_err "Pushall ID (-I) is required for self API call"
+		return 1;
+	fi
+	
+	if [ ! "$PUSHALL_KEY" ]; then
+		_print_err "Pushall key (-K) is required for self API call"
+		return 1;
+	fi
+	
+	return 0;
+	
+}
+
 _init
 _parse_options "$@"
 shift $((OPTIND-1));
@@ -242,7 +250,7 @@ case "$COMMAND" in
 	[Ss][Ee][Nn][Dd]|"")
 		case "$PUSHALL_API" in
 			[Ss][Ee][Ll][Ff])
-				_self_api_call
+				_self_api_check && _self_api_call
 			;;
 			*)
 				_print_err "Unknown API: \"$PUSHALL_API\""
