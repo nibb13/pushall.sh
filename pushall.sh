@@ -168,30 +168,34 @@ _parse_options () {
 
 _self_api_call () {
 
-	PARAMLINE="id=$PUSHALL_ID&key=$PUSHALL_KEY&title=$TITLE&text=$TEXT"
+	[ "$TITLE" ] && TITLE=$(_print -en "$TITLE")
+	[ "$TEXT" ] && TEXT=$(_print -en "$TEXT")
+	[ "$ICON" ] && ICON=$(_print -en "$ICON")
+	[ "$URL" ] && URL=$(_print -en "$URL")
+	[ "$ENCODE" ] && ENCODE=$(_print -en "$ENCODE")
+
+	PARAMLINE="--data-urlencode \"id=$PUSHALL_ID\" --data-urlencode \"key=$PUSHALL_KEY\" --data-urlencode \"title=$TITLE\" --data-urlencode \"text=$TEXT\""
 	
 	if [ "$ICON" ]; then
-		PARAMLINE="$PARAMLINE&icon=$ICON"
+		PARAMLINE="$PARAMLINE --data-urlencode \"icon=$ICON\""
 	fi
 	if [ "$URL" ]; then
-		PARAMLINE="$PARAMLINE&url=$URL"
+		PARAMLINE="$PARAMLINE --data-urlencode \"url=$URL\""
 	fi
 	if [ "$HIDDEN" ]; then
-		PARAMLINE="$PARAMLINE&hidden=$HIDDEN"
+		PARAMLINE="$PARAMLINE --data-urlencode \"hidden=$HIDDEN\""
 	fi
 	if [ "$ENCODE" ]; then
-		PARAMLINE="$PARAMLINE&encode=$ENCODE"
+		PARAMLINE="$PARAMLINE --data-urlencode \"encode=$ENCODE\""
 	fi
 	if [ "$PRIORITY" ]; then
-		PARAMLINE="$PARAMLINE&priority=$PRIORITY"
+		PARAMLINE="$PARAMLINE --data-urlencode \"priority=$PRIORITY\""
 	fi
 	if [ "$TTL" ]; then
-		PARAMLINE="$PARAMLINE&ttl=$TTL"
+		PARAMLINE="$PARAMLINE --data-urlencode \"ttl=$TTL\""
 	fi
 	
-	PARAMLINE=$(_print -en "$PARAMLINE")
-	
-	CURLARGS="-sS -d \"$PARAMLINE\" -X POST \"https://pushall.ru/api.php?type=self\""
+	CURLARGS="-sS $PARAMLINE -X POST \"https://pushall.ru/api.php?type=self\""
 	
 	if [ "$CA_BUNDLE" ]; then
 		CURLARGS="$CURLARGS --cacert \"$CA_BUNDLE\""
