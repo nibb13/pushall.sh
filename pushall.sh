@@ -187,6 +187,8 @@ _self_api_call () {
 		PARAMLINE="$PARAMLINE&ttl=$TTL"
 	fi
 	
+	PARAMLINE=$(_print -en "$PARAMLINE")
+	
 	CURLARGS="-sS -d \"$PARAMLINE\" -X POST \"https://pushall.ru/api.php?type=self\""
 	
 	if [ "$CA_BUNDLE" ]; then
