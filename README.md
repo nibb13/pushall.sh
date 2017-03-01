@@ -42,4 +42,4 @@ Any mentions, suggestions, pull-requests, bug reports, usage reports etc. are we
 
 <nibble@list.ru>  
 
-Last update: 13.02.2017
+Last update: 18.02.2017
