@@ -215,12 +215,12 @@ _self_api_call () {
 		return 1;
 	else
 		CURLPARSED=$(_print "$CURLSTDOUT" | $SCRIPT_DIR/JSON.awk)
-		PUSHALL_ERROR=$(_print "$CURLPARSED" | grep "\[\"error\"\]" | sed 's/.*\t"\?\(.*\)[^\\]"\?/\1/')
+		PUSHALL_ERROR=$(_print "$CURLPARSED" | grep "\[\"error\"\]" | sed 's/.*\t\(.*\)/\1/')
 		if [ "$PUSHALL_ERROR" ]; then
 			_print_err "API returned error: $PUSHALL_ERROR"
 			return 1;
 		fi
-		LID=$(_print "$CURLPARSED" | grep "\[\"lid\"\]" | sed 's/.*\t"\?\(.*\)[^\\]"\?/\1/')
+		LID=$(_print "$CURLPARSED" | grep "\[\"lid\"\]" | sed 's/.*\t\(.*\)/\1/')
 		_print "$LID"
 		return 0;
 	fi
