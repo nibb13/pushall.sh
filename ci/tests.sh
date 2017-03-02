@@ -8,7 +8,12 @@ export PATH="$PWD/mockbin:$PATH"
 
 cat > mockbin/curl <<CURL_MOCK
 #!/bin/sh
-echo "Curl invocation, params: \$@" >&2;
+if [ "\$*" = "-sS --data-urlencode id=pushall_id --data-urlencode key=pushall_key --data-urlencode title=Title --data-urlencode text=Text -X POST https://pushall.ru/api.php?type=self" ]; then
+	echo -e "{\\"success\\":1,\\"lid\\":6546002}"
+else
+	echo "Curl invocation, params: \$*" >&2
+	echo "\$*" >> ci/curl.log
+fi
 CURL_MOCK
 
 chmod +x mockbin/curl
@@ -17,6 +22,10 @@ chmod +x mockbin/curl
 
 # Usage test
 assert "./pushall.sh" "$(cat usage.txt)"
+assert "./pushall.sh -h" "$(cat usage.txt)"
+
+# self minimal call
+assert "./pushall.sh -c self -t \"Title\" -T \"Text\" -I \"pushall_id\" -K \"pushall_key\"" "6546002"
 
 #assert "./curlget.sh 2>&1" "Curl invocation, params: -h"
 #assert "echo"                           # no output expected
