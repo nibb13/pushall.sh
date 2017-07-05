@@ -203,7 +203,8 @@ _self_api_call () {
 	
 	# Calling curl & capturing stdout, stderr and exit code using
 	# tagging approach by Warbo, ref: http://stackoverflow.com/a/37602314
-	CURLOUT=$({ { eval "curl $CURLARGS"; echo -e "EXITSTATUS:$?" >&2; } | sed -e 's/^/STDOUT:/g'; } 2>&1)
+	CURLOUT=$({ { eval "curl $CURLARGS"; _print -e "EXITSTATUS:$?" >&2; } | sed -e 's/^/STDOUT:/g'; } 2>&1)
+	#_print "$CURLOUT"
 	CURLEXITSTATUS=$(_print "$CURLOUT" | grep "^EXITSTATUS:" | sed -e 's/^EXITSTATUS://g')
 #	CURLOUT="STDOUT:{\"success\":1,\"lid\":6546002}"
 #	CURLEXITSTATUS=0
