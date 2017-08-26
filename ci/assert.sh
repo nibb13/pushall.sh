@@ -1,5 +1,5 @@
 #!/bin/sh
-# assert.sh 1.1 - bash unit testing framework (sh port by Arthur "nibb13" Makhonko)
+# assert.sh 1.1 - bash unit testing framework
 # Copyright (C) 2009-2015 Robert Lehmann
 #
 # http://github.com/lehmannro/assert.sh
@@ -17,10 +17,11 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-_break () {
-	echo "break $1"
-	exit 0;
+echo () {
+    /bin/echo "$@"
 }
+
+export echo
 
 export DISCOVERONLY=${DISCOVERONLY:-}
 export DEBUG=${DEBUG:-}
@@ -104,7 +105,7 @@ assert_end() {
 assert() {
     # assert <command> <expected stdout> [stdin]
     #(( tests_ran++ )) || :
-    test_ran=$(( tests_ran++ ))
+    tests_ran=$(( $tests_ran+1 ))
     [ -z "$DISCOVERONLY" ] || return
     expected=$(echo -ne "$2")
     result="$(echo -n "$3" | eval 2>/dev/null $1)" || true
@@ -150,7 +151,7 @@ _assert_fail() {
     #tests_errors[$tests_failed]="$report"
     tests_errors="$(echo -e "$tests_errors$report")"
     #(( tests_failed++ )) || :
-    test_failed=$(( tests_failed++ ))
+    tests_failed=$(( $tests_failed+1 ))
 }
 
 skip_if() {
