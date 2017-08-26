@@ -24,8 +24,12 @@ chmod +x mockbin/curl
 assert "./pushall.sh" "$(cat usage.txt)"
 assert "./pushall.sh -h" "$(cat usage.txt)"
 
+assert_end "Usage test"
+
 # self minimal call
 assert "./pushall.sh -c self -t \"Title\" -T \"Text\" -I \"pushall_id\" -K \"pushall_key\"" "6546002"
+
+assert_end "Calls"
 
 #assert "./curlget.sh 2>&1" "Curl invocation, params: -h"
 #assert "echo"                           # no output expected
@@ -38,6 +42,5 @@ assert "./pushall.sh -c self -t \"Title\" -T \"Text\" -I \"pushall_id\" -K \"pus
 #assert_raises 'read a; exit $a' 42 "42" # variables still work
 #assert "echo 1;
 #echo 2      # ^" "1\n2"                 # semicolon required!
-assert_end demo
 
 rm -rf mockbin
