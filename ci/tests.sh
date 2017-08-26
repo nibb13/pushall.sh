@@ -18,7 +18,7 @@ CURL_MOCK
 
 chmod +x mockbin/curl
 
-. ./assert.sh
+. ci/assert.sh
 
 # Usage test
 assert "./pushall.sh" "$(cat usage.txt)"
