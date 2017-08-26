@@ -12,6 +12,9 @@ _init () {
 
 	CONF_SCRIPT_DIR=".pushall.sh";
 	SCRIPT_DIR=$(dirname "$0")
+	SCRIPT_NAME=$(basename "$0")
+	LOCKDIR="/var/lock/${SCRIPT_NAME}"
+	PIDFILE="${LOCKDIR}/pid"
 
 	if [ ! "$XDG_CONFIG_HOME" ]; then
 		XDG_CONFIG_HOME=~/.config;
@@ -240,6 +243,23 @@ _self_api_queue () {
 }
 
 _queue_run() {
+
+	# run once approach by bk138, ref: http://stackoverflow.com/a/25243837
+	if ! mkdir $LOCKDIR 2>/dev/null
+	then
+	# lock failed, but check for stale one by checking if the PID is really existing
+		PID=$(cat $PIDFILE)
+		if kill -0 $PID 2>/dev/null
+		then
+			_print_err "Queue is already running. Exiting."
+			exit 1
+		fi
+	fi
+
+	# lock successfully acquired, save PID
+	echo $$ > $PIDFILE
+
+	trap "rm -rf ${LOCKDIR}" QUIT INT TERM EXIT
 
 	while read -r _line
 	do
