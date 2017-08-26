@@ -1,0 +1,7 @@
+language: shell
+
+before_script:
+    - ./pushall.sh -h > usage.txt
+
+script:
+    - ci/tests.sh
