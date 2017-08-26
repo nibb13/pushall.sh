@@ -84,7 +84,7 @@ _usage () {
 	_print "Usage: $0 [-ctTh] [COMMAND]"
 	_print
 	_print "API calls to pushall.ru"
-	_print "v 0.1.0-alpha"
+	_print "v 0.1.1-alpha"
 	_print
 	_print "COMMAND can be:"
 	_print -e "\t\tsend or empty - send specified API call"
