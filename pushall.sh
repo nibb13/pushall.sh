@@ -15,6 +15,8 @@ _init () {
 	SCRIPT_NAME=$(basename "$0")
 	LOCKDIR="/var/lock/${SCRIPT_NAME}"
 	PIDFILE="${LOCKDIR}/pid"
+	LOCKDIR_QUEUE="/var/lock/${SCRIPT_NAME}_queue"
+	PIDFILE_QUEUE="${LOCKDIR_QUEUE}/pid"
 
 	if [ ! "$XDG_CONFIG_HOME" ]; then
 		XDG_CONFIG_HOME=~/.config;
@@ -235,9 +237,19 @@ _self_api_call () {
 
 _self_api_queue () {
 
+	while ! mkdir $LOCKDIR_QUEUE 2>/dev/null; do
+		QUEUE_LOCK_PID=$(cat $PIDFILE_QUEUE)
+		[ -f $PIDFILE_QUEUE ] && ! kill -0 $QUEUE_LOCK_PID 2>/dev/null && rm -rf "$LOCKDIR_QUEUE"
+	done
+
+	echo $$ > $PIDFILE_QUEUE
+
 	UUID=$(cat /proc/sys/kernel/random/uuid)
 
 	_print "$UUID/::/self/::/$PUSHALL_ID/::/$PUSHALL_KEY/::/$TITLE/::/$TEXT/::/$ICON/::/$URL/::/$HIDDEN/::/$ENCODE/::/$PRIORITY/::/$TTL/::/$CA_BUNDLE" >> "$XDG_DATA_HOME/$CONF_SCRIPT_DIR/queue.txt"
+
+	rm -rf "$LOCKDIR_QUEUE"
+
 	_print "$UUID"
 	
 }
@@ -263,6 +275,13 @@ _queue_run() {
 
 	while read -r _line
 	do
+		while ! mkdir $LOCKDIR_QUEUE 2>/dev/null; do
+			QUEUE_LOCK_PID=$(cat $PIDFILE_QUEUE)
+			[ -f $PIDFILE_QUEUE ] && ! kill -0 $QUEUE_LOCK_PID 2>/dev/null && rm -rf "$LOCKDIR_QUEUE"
+		done
+
+		echo $$ > $PIDFILE_QUEUE
+		
 		# TODO: Find a better way for this:
 		_api=$(echo "$_line" | awk -F"/::/" '{print $2}')
 		PUSHALL_ID=$(echo "$_line" | awk -F"/::/" '{print $3}')
@@ -291,6 +310,9 @@ _queue_run() {
 			;;
 		esac
 		sed -i 1d "$XDG_DATA_HOME/$CONF_SCRIPT_DIR/queue.txt"
+
+		rm -rf "$LOCKDIR_QUEUE"
+
 	done < "$XDG_DATA_HOME/$CONF_SCRIPT_DIR/queue.txt"
 
 	return 0;
