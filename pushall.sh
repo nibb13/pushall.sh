@@ -8,6 +8,8 @@ _check_cmd () {
 
 _init () {
 
+	SCRIPT_VERSION="v 0.1.1-alpha"
+
 	CONF_SCRIPT_DIR=".pushall.sh";
 	SCRIPT_DIR=$(dirname "$0")
 
@@ -81,10 +83,10 @@ _print_err () {
 
 _usage () {
 
-	_print "Usage: $0 [-ctTh] [COMMAND]"
+	_print "Usage: $0 -cIKtT [-beHilpuh] [COMMAND]"
 	_print
 	_print "API calls to pushall.ru"
-	_print "v 0.1.1-alpha"
+	_print "$SCRIPT_VERSION"
 	_print
 	_print "COMMAND can be:"
 	_print -e "\t\tsend or empty - send specified API call"
