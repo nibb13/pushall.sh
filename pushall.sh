@@ -230,7 +230,10 @@ _self_api_call () {
 
 _self_api_queue () {
 
-	_print "self/::/$PUSHALL_ID/::/$PUSHALL_KEY/::/$TITLE/::/$TEXT/::/$ICON/::/$URL/::/$HIDDEN/::/$ENCODE/::/$PRIORITY/::/$TTL/::/$CA_BUNDLE" >> "$XDG_DATA_HOME/$CONF_SCRIPT_DIR/queue.txt"
+	UUID=$(cat /proc/sys/kernel/random/uuid)
+
+	_print "$UUID/::/self/::/$PUSHALL_ID/::/$PUSHALL_KEY/::/$TITLE/::/$TEXT/::/$ICON/::/$URL/::/$HIDDEN/::/$ENCODE/::/$PRIORITY/::/$TTL/::/$CA_BUNDLE" >> "$XDG_DATA_HOME/$CONF_SCRIPT_DIR/queue.txt"
+	_print "$UUID"
 	
 }
 
@@ -239,18 +242,18 @@ _queue_run() {
 	while read -r _line
 	do
 		# TODO: Find a better way for this:
-		_api=$(echo "$_line" | awk -F"/::/" '{print $1}')
-		PUSHALL_ID=$(echo "$_line" | awk -F"/::/" '{print $2}')
-		PUSHALL_KEY=$(echo "$_line" | awk -F"/::/" '{print $3}')
-		TITLE=$(echo "$_line" | awk -F"/::/" '{print $4}')
-		TEXT=$(echo "$_line" | awk -F"/::/" '{print $5}')
-		ICON=$(echo "$_line" | awk -F"/::/" '{print $6}')
-		URL=$(echo "$_line" | awk -F"/::/" '{print $7}')
-		HIDDEN=$(echo "$_line" | awk -F"/::/" '{print $8}')
-		ENCODE=$(echo "$_line" | awk -F"/::/" '{print $9}')
-		PRIORITY=$(echo "$_line" | awk -F"/::/" '{print $10}')
-		TTL=$(echo "$_line" | awk -F"/::/" '{print $11}')
-		CA_BUNDLE=$(echo "$_line" | awk -F"/::/" '{print $12}')
+		_api=$(echo "$_line" | awk -F"/::/" '{print $2}')
+		PUSHALL_ID=$(echo "$_line" | awk -F"/::/" '{print $3}')
+		PUSHALL_KEY=$(echo "$_line" | awk -F"/::/" '{print $4}')
+		TITLE=$(echo "$_line" | awk -F"/::/" '{print $5}')
+		TEXT=$(echo "$_line" | awk -F"/::/" '{print $6}')
+		ICON=$(echo "$_line" | awk -F"/::/" '{print $7}')
+		URL=$(echo "$_line" | awk -F"/::/" '{print $8}')
+		HIDDEN=$(echo "$_line" | awk -F"/::/" '{print $9}')
+		ENCODE=$(echo "$_line" | awk -F"/::/" '{print $10}')
+		PRIORITY=$(echo "$_line" | awk -F"/::/" '{print $11}')
+		TTL=$(echo "$_line" | awk -F"/::/" '{print $12}')
+		CA_BUNDLE=$(echo "$_line" | awk -F"/::/" '{print $13}')
 		case "$_api" in
 			[Ss][Ee][Ll][Ff])
 				while true; do
