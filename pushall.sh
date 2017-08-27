@@ -281,20 +281,26 @@ _queue_run() {
 		done
 
 		echo $$ > $PIDFILE_QUEUE
+
+		FULL_LINE="$FULL_LINE$_line"
+
+		if [ $(echo "$FULL_LINE" | awk -F"/::/" '{print NF; exit}') -lt 13 ]; then
+			continue
+		fi
 		
 		# TODO: Find a better way for this:
-		_api=$(echo "$_line" | awk -F"/::/" '{print $2}')
-		PUSHALL_ID=$(echo "$_line" | awk -F"/::/" '{print $3}')
-		PUSHALL_KEY=$(echo "$_line" | awk -F"/::/" '{print $4}')
-		TITLE=$(echo "$_line" | awk -F"/::/" '{print $5}')
-		TEXT=$(echo "$_line" | awk -F"/::/" '{print $6}')
-		ICON=$(echo "$_line" | awk -F"/::/" '{print $7}')
-		URL=$(echo "$_line" | awk -F"/::/" '{print $8}')
-		HIDDEN=$(echo "$_line" | awk -F"/::/" '{print $9}')
-		ENCODE=$(echo "$_line" | awk -F"/::/" '{print $10}')
-		PRIORITY=$(echo "$_line" | awk -F"/::/" '{print $11}')
-		TTL=$(echo "$_line" | awk -F"/::/" '{print $12}')
-		CA_BUNDLE=$(echo "$_line" | awk -F"/::/" '{print $13}')
+		_api=$(echo "$FULL_LINE" | awk -F"/::/" '{print $2}')
+		PUSHALL_ID=$(echo "$FULL_LINE" | awk -F"/::/" '{print $3}')
+		PUSHALL_KEY=$(echo "$FULL_LINE" | awk -F"/::/" '{print $4}')
+		TITLE=$(echo "$FULL_LINE" | awk -F"/::/" '{print $5}')
+		TEXT=$(echo "$FULL_LINE" | awk -F"/::/" '{print $6}')
+		ICON=$(echo "$FULL_LINE" | awk -F"/::/" '{print $7}')
+		URL=$(echo "$FULL_LINE" | awk -F"/::/" '{print $8}')
+		HIDDEN=$(echo "$FULL_LINE" | awk -F"/::/" '{print $9}')
+		ENCODE=$(echo "$FULL_LINE" | awk -F"/::/" '{print $10}')
+		PRIORITY=$(echo "$FULL_LINE" | awk -F"/::/" '{print $11}')
+		TTL=$(echo "$FULL_LINE" | awk -F"/::/" '{print $12}')
+		CA_BUNDLE=$(echo "$FULL_LINE" | awk -F"/::/" '{print $13}')
 		case "$_api" in
 			[Ss][Ee][Ll][Ff])
 				while true; do
@@ -312,6 +318,8 @@ _queue_run() {
 		sed -i 1d "$XDG_DATA_HOME/$CONF_SCRIPT_DIR/queue.txt"
 
 		rm -rf "$LOCKDIR_QUEUE"
+
+		FULL_LINE=""
 
 	done < "$XDG_DATA_HOME/$CONF_SCRIPT_DIR/queue.txt"
 
