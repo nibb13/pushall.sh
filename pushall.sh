@@ -282,9 +282,12 @@ _queue_run() {
 
 		echo $$ > $PIDFILE_QUEUE
 
+		[ "FULL_LINE" ] && FULL_LINE="$FULL_LINE\n"
 		FULL_LINE="$FULL_LINE$_line"
 
 		if [ $(echo "$FULL_LINE" | awk -F"/::/" '{print NF; exit}') -lt 13 ]; then
+			sed -i 1d "$XDG_DATA_HOME/$CONF_SCRIPT_DIR/queue.txt"
+			rm -rf "$LOCKDIR_QUEUE"
 			continue
 		fi
 		
