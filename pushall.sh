@@ -256,6 +256,8 @@ _self_api_queue () {
 
 _queue_run() {
 
+	[ ! -f "$XDG_DATA_HOME/$CONF_SCRIPT_DIR/queue.txt" ] && return 0;
+
 	# run once approach by bk138, ref: http://stackoverflow.com/a/25243837
 	if ! mkdir $LOCKDIR 2>/dev/null
 	then
