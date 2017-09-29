@@ -341,6 +341,77 @@ _queue_run() {
 
 }
 
+_queue_delete_check() {
+
+	if [ ! "$EXTRA" ]; then
+		_print_err "ID is required to delete single record from queue"
+		return 1;
+	fi
+	
+	return 0;
+	
+}
+
+_queue_delete() {
+
+	[ ! -f "$XDG_DATA_HOME/$CONF_SCRIPT_DIR/queue.txt" ] && return 0;
+
+	while ! mkdir $LOCKDIR_QUEUE 2>/dev/null; do
+		QUEUE_LOCK_PID=$(cat $PIDFILE_QUEUE)
+		[ -f $PIDFILE_QUEUE ] && ! kill -0 $QUEUE_LOCK_PID 2>/dev/null && rm -rf "$LOCKDIR_QUEUE"
+	done
+
+	echo $$ > $PIDFILE_QUEUE
+
+	trap "rm -rf ${LOCKDIR_QUEUE}" QUIT INT TERM EXIT
+
+	while read -r _line
+	do
+
+		[ "$FULL_LINE" ] && FULL_LINE="$FULL_LINE\n"
+		FULL_LINE="$FULL_LINE$_line"
+
+		if [ $(echo "$FULL_LINE" | awk -F"/::/" '{print NF; exit}') -lt 13 ]; then
+			sed -i 1d "$XDG_DATA_HOME/$CONF_SCRIPT_DIR/queue.txt"
+			rm -rf "$LOCKDIR_QUEUE"
+			continue
+		fi
+
+		sed -i 1d "$XDG_DATA_HOME/$CONF_SCRIPT_DIR/queue.txt"
+
+		echo "$FULL_LINE" | grep "^$EXTRA/::/" >/dev/null || NEW_QUEUE="$NEW_QUEUE$FULL_LINE\n"
+
+		FULL_LINE=""
+
+	done < "$XDG_DATA_HOME/$CONF_SCRIPT_DIR/queue.txt"
+
+	[ "$NEW_QUEUE" ] && _print -en "$NEW_QUEUE" > "$XDG_DATA_HOME/$CONF_SCRIPT_DIR/queue.txt"
+
+	rm -rf "$LOCKDIR_QUEUE"
+
+	return 0;
+
+}
+
+_queue_clear() {
+
+	[ ! -f "$XDG_DATA_HOME/$CONF_SCRIPT_DIR/queue.txt" ] && return 0;
+
+	while ! mkdir $LOCKDIR_QUEUE 2>/dev/null; do
+		QUEUE_LOCK_PID=$(cat $PIDFILE_QUEUE)
+		[ -f $PIDFILE_QUEUE ] && ! kill -0 $QUEUE_LOCK_PID 2>/dev/null && rm -rf "$LOCKDIR_QUEUE"
+	done
+
+	echo $$ > $PIDFILE_QUEUE
+
+	trap "rm -rf ${LOCKDIR_QUEUE}" QUIT INT TERM EXIT
+
+	rm "$XDG_DATA_HOME/$CONF_SCRIPT_DIR/queue.txt"
+
+	rm -rf "$LOCKDIR_QUEUE"
+
+}
+
 _self_api_check() {
 
 	if [ ! "$TITLE" ]; then
@@ -371,6 +442,7 @@ _init
 _parse_options "$@"
 shift $((OPTIND-1));
 COMMAND=$1;
+EXTRA=$2;
 
 case "$COMMAND" in
 
@@ -398,6 +470,12 @@ case "$COMMAND" in
 	;;
 	[Rr][Uu][Nn])
 		_queue_run
+	;;
+	[Dd][Ee][Ll][Ee][Tt][Ee])
+		_queue_delete_check && _queue_delete
+	;;
+	[Cc][Ll][Ee][Aa][Rr])
+		_queue_clear
 	;;
 	*)
 		_print_err "Unknown command: \"$COMMAND\""
