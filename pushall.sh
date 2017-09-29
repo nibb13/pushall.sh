@@ -277,21 +277,28 @@ _queue_run() {
 
 	while read -r _line
 	do
-		while ! mkdir $LOCKDIR_QUEUE 2>/dev/null; do
-			QUEUE_LOCK_PID=$(cat $PIDFILE_QUEUE)
-			[ -f $PIDFILE_QUEUE ] && ! kill -0 $QUEUE_LOCK_PID 2>/dev/null && rm -rf "$LOCKDIR_QUEUE"
-		done
 
-		echo $$ > $PIDFILE_QUEUE
+		if [ ! "$READING_LINE"]; then
+
+			while ! mkdir $LOCKDIR_QUEUE 2>/dev/null; do
+				QUEUE_LOCK_PID=$(cat $PIDFILE_QUEUE)
+				[ -f $PIDFILE_QUEUE ] && ! kill -0 $QUEUE_LOCK_PID 2>/dev/null && rm -rf "$LOCKDIR_QUEUE"
+			done
+
+			echo $$ > $PIDFILE_QUEUE
+
+		fi
 
 		[ "$FULL_LINE" ] && FULL_LINE="$FULL_LINE\n"
 		FULL_LINE="$FULL_LINE$_line"
 
 		if [ $(echo "$FULL_LINE" | awk -F"/::/" '{print NF; exit}') -lt 13 ]; then
 			sed -i 1d "$XDG_DATA_HOME/$CONF_SCRIPT_DIR/queue.txt"
-			rm -rf "$LOCKDIR_QUEUE"
+			READING_LINE=1
 			continue
 		fi
+
+		READING_LINE=
 		
 		# TODO: Find a better way for this:
 		_api=$(echo "$FULL_LINE" | awk -F"/::/" '{print $2}')
@@ -327,6 +334,8 @@ _queue_run() {
 		FULL_LINE=""
 
 	done < "$XDG_DATA_HOME/$CONF_SCRIPT_DIR/queue.txt"
+
+	rm -rf "$LOCKDIR_QUEUE" # In case of faulty data in queue
 
 	return 0;
 
