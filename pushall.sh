@@ -97,6 +97,8 @@ _usage () {
 	_print -e "\t\tsend or empty - send specified API call"
 	_print -e "\t\tqueue - store specified API call in sending queue"
 	_print -e "\t\trun - run sending queue respecting all timeouts"
+	_print -e "\t\tdelete <ID> - delete single record from queue (ID returned by queue call)"
+	_print -e "\t\tclear - clear current queue"
 	_print
 	_print "General options:"
 	_print -e "\t-b\tCA bundle path for curl"
