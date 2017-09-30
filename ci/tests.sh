@@ -53,9 +53,13 @@ assert_end "Instant calls"
 SCRIPT_NAME=$(basename "$0")
 LOCKDIR_QUEUE="/var/lock/${SCRIPT_NAME}_queue"
 
-mkdir $LOCKDIR_QUEUE
+#mkdir $LOCKDIR_QUEUE
 
-echo "mkdir status: $?"
+#echo "mkdir status: $?"
+
+ls -la /var
+ls -la /run
+la -la /run/lock
 
 exit 0;
 
