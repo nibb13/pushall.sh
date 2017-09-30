@@ -28,11 +28,11 @@ chmod +x mockbin/curl
 
 CONF_SCRIPT_DIR=".pushall.sh";
 if [ ! "$XDG_CONFIG_HOME" ]; then
-	XDG_CONFIG_HOME=~/.config;
+	export XDG_CONFIG_HOME=./ci/.config;
 fi
 
 if [ ! "$XDG_DATA_HOME" ]; then
-	XDG_DATA_HOME=~/.local/share;
+	export XDG_DATA_HOME=./ci/.local/share;
 fi
 
 QUEUE_FILE=$XDG_DATA_HOME/$CONF_SCRIPT_DIR/queue.txt
