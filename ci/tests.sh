@@ -50,6 +50,15 @@ assert "./pushall.sh -c self -t \"Title\" -T \"Text\" -i \"http://test.com/icon.
 
 assert_end "Instant calls"
 
+SCRIPT_NAME=$(basename "$0")
+LOCKDIR_QUEUE="/var/lock/${SCRIPT_NAME}_queue"
+
+mkdir $LOCKDIR_QUEUE
+
+echo "mkdir status: $?"
+
+exit 0;
+
 # Queue add
 assert_raises "./pushall.sh -c self -t \"Title\" -T \"Text\" -I \"pushall_id\" -K \"pushall_key\" queue 2>&1" 0
 assert_raises "[ -s $QUEUE_FILE ]" 0
