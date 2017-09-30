@@ -20,6 +20,7 @@ fi
 
 printf "%s\n" "Curl invocation, params: \$*" >&2
 printf "%s\n" "\$*" >> curl.log
+exit 1
 CURL_MOCK
 
 chmod +x mockbin/curl
