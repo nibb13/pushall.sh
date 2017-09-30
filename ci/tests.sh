@@ -10,15 +10,32 @@ cat > mockbin/curl <<CURL_MOCK
 #!/bin/sh
 if [ "\$*" = "-sS --data-urlencode id=pushall_id --data-urlencode key=pushall_key --data-urlencode title=Title --data-urlencode text=Text -X POST https://pushall.ru/api.php?type=self" ]; then
 	printf "%b\n" "{\\"success\\":1,\\"lid\\":6546002}"
-else
-	printf "%s\n" "Curl invocation, params: \$*" >&2
-	printf "%s\n" "\$*" >> curl.log
+	exit 0
 fi
+
+if [ "\$*" = "-sS --data-urlencode id=pushall_id --data-urlencode key=pushall_key --data-urlencode title=Title --data-urlencode text=Text --data-urlencode icon=http://test.com/icon.png --data-urlencode url=http://google.com --data-urlencode hidden=2 --data-urlencode encode=utf8 --data-urlencode priority=1 --data-urlencode ttl=300 -X POST https://pushall.ru/api.php?type=self" ]; then
+	printf "%b\n" "{\\"success\\":1,\\"lid\\":6546003}"
+	exit 0
+fi
+
+printf "%s\n" "Curl invocation, params: \$*" >&2
+printf "%s\n" "\$*" >> curl.log
 CURL_MOCK
 
 chmod +x mockbin/curl
 
 . ci/assert.sh
+
+CONF_SCRIPT_DIR=".pushall.sh";
+if [ ! "$XDG_CONFIG_HOME" ]; then
+	XDG_CONFIG_HOME=~/.config;
+fi
+
+if [ ! "$XDG_DATA_HOME" ]; then
+	XDG_DATA_HOME=~/.local/share;
+fi
+
+QUEUE_FILE=$XDG_DATA_HOME/$CONF_SCRIPT_DIR/queue.txt
 
 # Usage test
 assert "./pushall.sh" "$(cat usage.txt)"
@@ -28,6 +45,30 @@ assert_end "Usage test"
 
 # self minimal call
 assert "./pushall.sh -c self -t \"Title\" -T \"Text\" -I \"pushall_id\" -K \"pushall_key\" 2>&1" "6546002"
+# self call with all usable params
+assert "./pushall.sh -c self -t \"Title\" -T \"Text\" -i \"http://test.com/icon.png\" -I \"pushall_id\" -K \"pushall_key\" -u \"http://google.com\" -H 2 -e \"utf8\" -p 1 -l 300 2>&1" "6546003"
+# Queue add
+assert_raises "./pushall.sh -c self -t \"Title\" -T \"Text\" -I \"pushall_id\" -K \"pushall_key\" queue 2>&1" 0
+assert_raises "[ -s $QUEUE_FILE ]" 0
+QUEUE_ID=$(awk -F '/::/' '{print $1;}' "$QUEUE_FILE")
+assert_raises "[ \"$QUEUE_ID\" ]" 0
+# Queue delete
+assert_raises "./pushall.sh delete \"$QUEUE_ID\" 2>&1" 0
+assert_raises "[ -s $QUEUE_FILE ]" 1
+# Queue clear
+./pushall.sh -c self -t "Title" -T "Text" -I "pushall_id" -K "pushall_key" queue >/dev/null
+./pushall.sh -c self -t "Title" -T "Text" -I "pushall_id" -K "pushall_key" queue >/dev/null
+./pushall.sh -c self -t "Title" -T "Text" -I "pushall_id" -K "pushall_key" queue >/dev/null
+assert_raises "[ -s $QUEUE_FILE ]" 0
+assert_raises "./pushall.sh clear" 0
+assert_raises "[ -s $QUEUE_FILE ]" 1
+# Queue run
+./pushall.sh -c self -t "Title" -T "Text" -I "pushall_id" -K "pushall_key" queue >/dev/null
+./pushall.sh -c self -t "Title" -T "Text" -I "pushall_id" -K "pushall_key" queue >/dev/null
+./pushall.sh -c self -t "Title" -T "Text" -I "pushall_id" -K "pushall_key" queue >/dev/null
+assert_raises "[ -s $QUEUE_FILE ]" 0
+assert_raises "./pushall.sh run" 0
+assert_raises "[ -s $QUEUE_FILE ]" 1
 
 assert_end "Calls"
 
