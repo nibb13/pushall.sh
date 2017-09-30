@@ -47,14 +47,23 @@ assert_end "Usage test"
 assert "./pushall.sh -c self -t \"Title\" -T \"Text\" -I \"pushall_id\" -K \"pushall_key\" 2>&1" "6546002"
 # self call with all usable params
 assert "./pushall.sh -c self -t \"Title\" -T \"Text\" -i \"http://test.com/icon.png\" -I \"pushall_id\" -K \"pushall_key\" -u \"http://google.com\" -H 2 -e \"utf8\" -p 1 -l 300 2>&1" "6546003"
+
+assert_end "Instant calls"
+
 # Queue add
 assert_raises "./pushall.sh -c self -t \"Title\" -T \"Text\" -I \"pushall_id\" -K \"pushall_key\" queue 2>&1" 0
 assert_raises "[ -s $QUEUE_FILE ]" 0
 QUEUE_ID=$(awk -F '/::/' '{print $1;}' "$QUEUE_FILE")
 assert_raises "[ \"$QUEUE_ID\" ]" 0
+
+assert_end "Queue add"
+
 # Queue delete
 assert_raises "./pushall.sh delete \"$QUEUE_ID\" 2>&1" 0
 assert_raises "[ -s $QUEUE_FILE ]" 1
+
+assert_end "Queue delete"
+
 # Queue clear
 ./pushall.sh -c self -t "Title" -T "Text" -I "pushall_id" -K "pushall_key" queue >/dev/null
 ./pushall.sh -c self -t "Title" -T "Text" -I "pushall_id" -K "pushall_key" queue >/dev/null
@@ -62,6 +71,9 @@ assert_raises "[ -s $QUEUE_FILE ]" 1
 assert_raises "[ -s $QUEUE_FILE ]" 0
 assert_raises "./pushall.sh clear" 0
 assert_raises "[ -s $QUEUE_FILE ]" 1
+
+assert_end "Queue clear"
+
 # Queue run
 ./pushall.sh -c self -t "Title" -T "Text" -I "pushall_id" -K "pushall_key" queue >/dev/null
 ./pushall.sh -c self -t "Title" -T "Text" -I "pushall_id" -K "pushall_key" queue >/dev/null
@@ -70,7 +82,7 @@ assert_raises "[ -s $QUEUE_FILE ]" 0
 assert_raises "./pushall.sh run" 0
 assert_raises "[ -s $QUEUE_FILE ]" 1
 
-assert_end "Calls"
+assert_end "Queue run"
 
 #assert "./curlget.sh 2>&1" "Curl invocation, params: -h"
 #assert "echo"                           # no output expected
