@@ -50,18 +50,10 @@ assert "./pushall.sh -c self -t \"Title\" -T \"Text\" -i \"http://test.com/icon.
 
 assert_end "Instant calls"
 
-SCRIPT_NAME=$(basename "$0")
-LOCKDIR_QUEUE="/var/lock/${SCRIPT_NAME}_queue"
+# Travis CI issue: https://github.com/travis-ci/travis-cookbooks/issues/876
 
-#mkdir $LOCKDIR_QUEUE
-
-#echo "mkdir status: $?"
-
-ls -la /var
-ls -la /run
-la -la /run/lock
-
-exit 0;
+mkdir -p ./ci/var/lock/
+export LOCKDIR_PREFIX="./ci"
 
 # Queue add
 assert_raises "./pushall.sh -c self -t \"Title\" -T \"Text\" -I \"pushall_id\" -K \"pushall_key\" queue 2>&1" 0

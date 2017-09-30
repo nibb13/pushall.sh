@@ -13,9 +13,9 @@ _init () {
 	CONF_SCRIPT_DIR=".pushall.sh";
 	SCRIPT_DIR=$(dirname "$0")
 	SCRIPT_NAME=$(basename "$0")
-	LOCKDIR="/var/lock/${SCRIPT_NAME}"
+	LOCKDIR="$LOCKDIR_PREFIX/var/lock/${SCRIPT_NAME}"
 	PIDFILE="${LOCKDIR}/pid"
-	LOCKDIR_QUEUE="/var/lock/${SCRIPT_NAME}_queue"
+	LOCKDIR_QUEUE="$LOCKDIR_PREFIX/var/lock/${SCRIPT_NAME}_queue"
 	PIDFILE_QUEUE="${LOCKDIR_QUEUE}/pid"
 
 	if [ ! "$XDG_CONFIG_HOME" ]; then
