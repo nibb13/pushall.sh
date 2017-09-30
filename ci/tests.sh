@@ -58,7 +58,6 @@ export LOCKDIR_PREFIX="./ci"
 # Queue add
 assert_raises "./pushall.sh -c self -t \"Title\" -T \"Text\" -I \"pushall_id\" -K \"pushall_key\" queue 2>&1" 0
 assert_raises "[ -s $QUEUE_FILE ]" 0
-echo "Queue file is at: $QUEUE_FILE"
 QUEUE_ID=$(cat "$QUEUE_FILE" | awk -F '/::/' '{print $1;}')
 assert_raises "[ \"$QUEUE_ID\" ]" 0
 
