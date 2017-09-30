@@ -122,10 +122,10 @@ assert() {
 assert_raises() {
     # assert_raises <command> <expected code> [stdin]
     #(( tests_ran++ )) || :
-    test_ran=$(( tests_ran++ ))
+    tests_ran=$(( $tests_ran+1 ))
     [ -z "$DISCOVERONLY" ] || return
     status=0
-    $(echo -n "$3" | eval $1) > /dev/null 2>&1 || status=$?
+    $(echo -n "$3" | eval $1 > /dev/null 2>&1) || status=$?
     expected="$2"
     if [ "$status" -eq "$expected" ]; then
         [ -z "$DEBUG" ] || echo -n .
