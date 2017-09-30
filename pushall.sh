@@ -253,6 +253,8 @@ _self_api_queue () {
 	rm -rf "$LOCKDIR_QUEUE"
 
 	_print "$UUID"
+
+	return 0;
 	
 }
 
