@@ -95,7 +95,7 @@ _usage () {
 	_print
 	_print "COMMAND can be:"
 	_print -e "\t\tsend or empty - send specified API call"
-	_print -e "\t\tqueue - store specified API call in sending queue"
+	_print -e "\t\tqueue [top] - store specified API call in sending queue (optionally to the top)"
 	_print -e "\t\trun - run sending queue respecting all timeouts"
 	_print -e "\t\tdelete <ID> - delete single record from queue (ID returned by queue call)"
 	_print -e "\t\tclear - clear current queue"
@@ -239,6 +239,14 @@ _self_api_call () {
 
 _self_api_queue () {
 
+	case "$EXTRA" in
+
+		[Tt][Oo][Pp])
+			EXTRA="top"
+		;;
+
+	esac
+
 	while ! mkdir $LOCKDIR_QUEUE 2>/dev/null; do
 		QUEUE_LOCK_PID=$(cat $PIDFILE_QUEUE)
 		[ -f $PIDFILE_QUEUE ] && ! kill -0 $QUEUE_LOCK_PID 2>/dev/null && rm -rf "$LOCKDIR_QUEUE"
@@ -248,7 +256,15 @@ _self_api_queue () {
 
 	UUID=$(cat /proc/sys/kernel/random/uuid)
 
-	_print "$UUID/::/self/::/$PUSHALL_ID/::/$PUSHALL_KEY/::/$TITLE/::/$TEXT/::/$ICON/::/$URL/::/$HIDDEN/::/$ENCODE/::/$PRIORITY/::/$TTL/::/$CA_BUNDLE" >> "$XDG_DATA_HOME/$CONF_SCRIPT_DIR/queue.txt"
+	if [ "$EXTRA" = "top" ]; then
+		# TODO: Make checks against running out of space
+		mv $XDG_DATA_HOME/$CONF_SCRIPT_DIR/queue.txt $XDG_DATA_HOME/$CONF_SCRIPT_DIR/queue.old
+		_print "$UUID/::/self/::/$PUSHALL_ID/::/$PUSHALL_KEY/::/$TITLE/::/$TEXT/::/$ICON/::/$URL/::/$HIDDEN/::/$ENCODE/::/$PRIORITY/::/$TTL/::/$CA_BUNDLE" > "$XDG_DATA_HOME/$CONF_SCRIPT_DIR/queue.txt"
+		cat $XDG_DATA_HOME/$CONF_SCRIPT_DIR/queue.old >> $XDG_DATA_HOME/$CONF_SCRIPT_DIR/queue.txt
+		rm $XDG_DATA_HOME/$CONF_SCRIPT_DIR/queue.old
+	else
+		_print "$UUID/::/self/::/$PUSHALL_ID/::/$PUSHALL_KEY/::/$TITLE/::/$TEXT/::/$ICON/::/$URL/::/$HIDDEN/::/$ENCODE/::/$PRIORITY/::/$TTL/::/$CA_BUNDLE" >> "$XDG_DATA_HOME/$CONF_SCRIPT_DIR/queue.txt"
+	fi
 
 	rm -rf "$LOCKDIR_QUEUE"
 
