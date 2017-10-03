@@ -2,7 +2,7 @@
 
 POSIX-shell implementation of [pushall.ru API](https://pushall.ru/blog/api).
 
-v. 0.1.1-alpha [![Build Status](https://travis-ci.org/nibb13/pushall.sh.svg?branch=develop)](https://travis-ci.org/nibb13/pushall.sh)
+v. 0.1.1-alpha [![Build Status](https://travis-ci.org/nibb13/pushall.sh.svg?branch=release-0.1.1-alpha)](https://travis-ci.org/nibb13/pushall.sh)
 
 ## Features
 
@@ -42,4 +42,4 @@ Any mentions, suggestions, pull-requests, bug reports, usage reports etc. are we
 
 <nibble@list.ru>  
 
-Last update: 26.08.2017
+Last update: 04.10.2017
