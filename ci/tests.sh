@@ -70,6 +70,16 @@ assert_raises "[ -s $QUEUE_FILE ]" 1
 
 assert_end "Queue delete"
 
+# Queue add to the top
+./pushall.sh -c self -t "Title" -T "Text" -I "pushall_id" -K "pushall_key" queue >/dev/null
+assert_raises "./pushall.sh -c self -t \"Title\" -T \"Text\" -I \"pushall_id\" -K \"pushall_key\" queue top 2>&1" 0
+NEW_ID=$(./pushall.sh -c self -t "Title" -T "Text" -I "pushall_id" -K "pushall_key" queue top)
+assert_raises "[ -s $QUEUE_FILE ]" 0
+QUEUE_ID=$(cat "$QUEUE_FILE" | awk -F '/::/' '{print $1;exit 0;}')
+assert_raises "[ \"$QUEUE_ID\" = \"$NEW_ID\" ]" 0
+
+assert_end "Queue add to the top"
+
 # Queue clear
 ./pushall.sh -c self -t "Title" -T "Text" -I "pushall_id" -K "pushall_key" queue >/dev/null
 ./pushall.sh -c self -t "Title" -T "Text" -I "pushall_id" -K "pushall_key" queue >/dev/null
@@ -103,3 +113,5 @@ assert_end "Queue run"
 #echo 2      # ^" "1\n2"                 # semicolon required!
 
 rm -rf mockbin
+rm -rf ci/.local
+rm -rf ci/var
