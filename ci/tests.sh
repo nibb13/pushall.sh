@@ -133,13 +133,13 @@ assert "./pushall.sh -c self -t \"Title\" -T \"API error test\" -I \"pushall_id\
 ./pushall.sh -c self -t "Title" -T "Text" -I "pushall_id" -K "pushall_key" queue >/dev/null
 ./pushall.sh -c self -t "Title" -T "Text" -I "pushall_id" -K "pushall_key" queue >/dev/null
 ./pushall.sh -c self -t "Title" -T "Text" -I "pushall_id" -K "pushall_key" queue >/dev/null
-./pushall.sh run >/dev/null &
+./pushall.sh run 2>&1 &
 BG_PUSHALL_PID=$!
 echo "bg job pid: $!"
 #assert_raises "./pushall.sh run 2>&1" 1
 #assert "./pushall.sh run 2>&1" "Queue is already running. Exiting."
 while kill -0 $BG_PUSHALL_PID >/dev/null 2>&1; do
-	ps | grep [p]ushall
+	true
 done
 
 assert_end "ERROR HANDLING"
