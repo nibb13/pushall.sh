@@ -42,14 +42,14 @@ QUEUE_FILE=$XDG_DATA_HOME/$CONF_SCRIPT_DIR/queue.txt
 assert "./pushall.sh" "$(cat usage.txt)"
 assert "./pushall.sh -h" "$(cat usage.txt)"
 
-assert_end "Usage test"
+assert_end "USAGE MESSAGE"
 
 # self minimal call
 assert "./pushall.sh -c self -t \"Title\" -T \"Text\" -I \"pushall_id\" -K \"pushall_key\" 2>&1" "6546002"
 # self call with all usable params
 assert "./pushall.sh -c self -t \"Title\" -T \"Text\" -i \"http://test.com/icon.png\" -I \"pushall_id\" -K \"pushall_key\" -u \"http://google.com\" -H 2 -e \"utf8\" -p 1 -l 300 2>&1" "6546003"
 
-assert_end "Instant calls"
+assert_end "INSTANT CALLS"
 
 # Travis CI issue: https://github.com/travis-ci/travis-cookbooks/issues/876
 
@@ -62,13 +62,13 @@ assert_raises "[ -s $QUEUE_FILE ]" 0
 QUEUE_ID=$(cat "$QUEUE_FILE" | awk -F '/::/' '{print $1;}')
 assert_raises "[ \"$QUEUE_ID\" ]" 0
 
-assert_end "Queue add"
+assert_end "QUEUE ADD"
 
 # Queue delete
 assert_raises "./pushall.sh delete \"$QUEUE_ID\" 2>&1" 0
 assert_raises "[ -s $QUEUE_FILE ]" 1
 
-assert_end "Queue delete"
+assert_end "QUEUE DELETE"
 
 # Queue add to the top
 ./pushall.sh -c self -t "Title" -T "Text" -I "pushall_id" -K "pushall_key" queue >/dev/null
@@ -78,7 +78,7 @@ assert_raises "[ -s $QUEUE_FILE ]" 0
 QUEUE_ID=$(cat "$QUEUE_FILE" | awk -F '/::/' '{print $1;exit 0;}')
 assert_raises "[ \"$QUEUE_ID\" = \"$NEW_ID\" ]" 0
 
-assert_end "Queue add to the top"
+assert_end "QUEUE ADD TO THE TOP"
 
 # Queue clear
 ./pushall.sh -c self -t "Title" -T "Text" -I "pushall_id" -K "pushall_key" queue >/dev/null
@@ -88,7 +88,7 @@ assert_raises "[ -s $QUEUE_FILE ]" 0
 assert_raises "./pushall.sh clear" 0
 assert_raises "[ -s $QUEUE_FILE ]" 1
 
-assert_end "Queue clear"
+assert_end "QUEUE CLEAR"
 
 # Queue run
 ./pushall.sh -c self -t "Title" -T "Text" -I "pushall_id" -K "pushall_key" queue >/dev/null
@@ -98,7 +98,24 @@ assert_raises "[ -s $QUEUE_FILE ]" 0
 assert_raises "./pushall.sh run" 0
 assert_raises "[ -s $QUEUE_FILE ]" 1
 
-assert_end "Queue run"
+assert_end "QUEUE RUN"
+
+# No api call (-c) set
+assert_raises "./pushall.sh -t \"Title\" -T \"Text\" -I \"pushall_id\" -K \"pushall_key\" 2>&1" 1
+# No account ID set (-I)
+assert_raises "./pushall.sh -c self -t \"Title\" -T \"Text\" -K \"pushall_key\" 2>&1" 1
+# No account key set (-K)
+assert_raises "./pushall.sh -c self -t \"Title\" -T \"Text\" -I \"pushall_id\" 2>&1" 1
+# No message title set (-t)
+assert_raises "./pushall.sh -c self -T \"Text\" -I \"pushall_id\" -K \"pushall_key\" 2>&1" 1
+# No message body set (-T)
+assert_raises "./pushall.sh -c self -t \"Title\" -I \"pushall_id\" -K \"pushall_key\" 2>&1" 1
+# Wrong API call set (-c wrongapicall)
+assert_raises "./pushall.sh -c wrongapicall -t \"Title\" -T \"Text\" -I \"pushall_id\" -K \"pushall_key\" 2>&1" 1
+# Wrong command supplied
+assert_raises "./pushall.sh -c self -t \"Title\" -T \"Text\" -I \"pushall_id\" -K \"pushall_key\" wrongcmd 2>&1" 1
+
+assert_end "ERROR HANDLING"
 
 #assert "./curlget.sh 2>&1" "Curl invocation, params: -h"
 #assert "echo"                           # no output expected
