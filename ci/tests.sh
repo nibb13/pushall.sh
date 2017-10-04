@@ -18,6 +18,16 @@ if [ "\$*" = "-sS --data-urlencode id=pushall_id --data-urlencode key=pushall_ke
 	exit 0
 fi
 
+if [ "\$*" = "-sS --data-urlencode id=pushall_id --data-urlencode key=pushall_key --data-urlencode title=Title --data-urlencode text=Unreachable test -X POST https://pushall.ru/api.php?type=self" ]; then
+	printf "%s\n" "curl: (6) Couldn't resolve host 'pushall.ru'"
+	exit 6
+fi
+
+if [ "\$*" = "-sS --data-urlencode id=pushall_id --data-urlencode key=pushall_key --data-urlencode title=Title --data-urlencode text=API error test -X POST https://pushall.ru/api.php?type=self" ]; then
+	printf "%b\n" "{\\"error\\":\\"wrong key\\"}"
+	exit 0
+fi
+
 printf "%s\n" "Curl invocation, params: \$*" >&2
 printf "%s\n" "\$*" >> curl.log
 exit 1
@@ -114,6 +124,22 @@ assert_raises "./pushall.sh -c self -t \"Title\" -I \"pushall_id\" -K \"pushall_
 assert_raises "./pushall.sh -c wrongapicall -t \"Title\" -T \"Text\" -I \"pushall_id\" -K \"pushall_key\" 2>&1" 1
 # Wrong command supplied
 assert_raises "./pushall.sh -c self -t \"Title\" -T \"Text\" -I \"pushall_id\" -K \"pushall_key\" wrongcmd 2>&1" 1
+# Curl error (server is unreachable)
+assert_raises "./pushall.sh -c self -t \"Title\" -T \"Unreachable test\" -I \"pushall_id\" -K \"pushall_key\" 2>&1" 1
+# API error (malformed data etc.)
+assert_raises "./pushall.sh -c self -t \"Title\" -T \"API error test\" -I \"pushall_id\" -K \"pushall_key\" 2>&1" 1
+assert "./pushall.sh -c self -t \"Title\" -T \"API error test\" -I \"pushall_id\" -K \"pushall_key\" 2>&1" "API returned error: \"wrong key\""
+# Multiple instance queue run
+./pushall.sh -c self -t "Title" -T "Text" -I "pushall_id" -K "pushall_key" queue >/dev/null
+./pushall.sh -c self -t "Title" -T "Text" -I "pushall_id" -K "pushall_key" queue >/dev/null
+./pushall.sh -c self -t "Title" -T "Text" -I "pushall_id" -K "pushall_key" queue >/dev/null
+./pushall.sh run >/dev/null &
+BG_PUSHALL_PID=$!
+assert_raises "./pushall.sh run 2>&1" 1
+assert "./pushall.sh run 2>&1" "Queue is already running. Exiting."
+while kill -0 $BG_PUSHALL_PID >/dev/null 2>&1; do
+	true
+done
 
 assert_end "ERROR HANDLING"
 
