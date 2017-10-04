@@ -499,6 +499,7 @@ case "$COMMAND" in
 	;;
 	*)
 		_print_err "Unknown command: \"$COMMAND\""
+		exit 1;
 	;;
 
 esac
