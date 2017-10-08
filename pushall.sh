@@ -13,10 +13,8 @@ _init () {
 	CONF_SCRIPT_DIR=".pushall.sh";
 	SCRIPT_DIR=$(dirname "$0")
 	SCRIPT_NAME=$(basename "$0")
-	LOCKDIR="$LOCKDIR_PREFIX/var/lock/${SCRIPT_NAME}"
+	LOCKDIR="$LOCKDIR_PREFIX/var/lock/${SCRIPT_NAME}_${USER}"
 	PIDFILE="${LOCKDIR}/pid"
-	LOCKDIR_QUEUE="$LOCKDIR_PREFIX/var/lock/${SCRIPT_NAME}_queue"
-	PIDFILE_QUEUE="${LOCKDIR_QUEUE}/pid"
 
 	if [ ! "$XDG_CONFIG_HOME" ]; then
 		XDG_CONFIG_HOME=~/.config;
@@ -311,12 +309,7 @@ _self_api_queue () {
 
 	esac
 
-	while ! mkdir $LOCKDIR_QUEUE 2>/dev/null; do
-		QUEUE_LOCK_PID=$(cat $PIDFILE_QUEUE)
-		[ -f $PIDFILE_QUEUE ] && ! kill -0 $QUEUE_LOCK_PID 2>/dev/null && rm -rf "$LOCKDIR_QUEUE"
-	done
-
-	echo $$ > $PIDFILE_QUEUE
+	_lock_set "queue"
 
 	UUID=$(cat /proc/sys/kernel/random/uuid)
 
@@ -330,7 +323,7 @@ _self_api_queue () {
 		_print "$UUID/::/self/::/$PUSHALL_ID/::/$PUSHALL_KEY/::/$TITLE/::/$TEXT/::/$ICON/::/$URL/::/$HIDDEN/::/$ENCODE/::/$PRIORITY/::/$TTL/::/$CA_BUNDLE" >> "$XDG_DATA_HOME/$CONF_SCRIPT_DIR/queue.txt"
 	fi
 
-	rm -rf "$LOCKDIR_QUEUE"
+	_lock_remove "queue"
 
 	_print "$UUID"
 
@@ -348,12 +341,7 @@ _broadcast_api_queue () {
 
 	esac
 
-	while ! mkdir $LOCKDIR_QUEUE 2>/dev/null; do
-		QUEUE_LOCK_PID=$(cat $PIDFILE_QUEUE)
-		[ -f $PIDFILE_QUEUE ] && ! kill -0 $QUEUE_LOCK_PID 2>/dev/null && rm -rf "$LOCKDIR_QUEUE"
-	done
-
-	echo $$ > $PIDFILE_QUEUE
+	_lock_set "queue"
 
 	UUID=$(cat /proc/sys/kernel/random/uuid)
 
@@ -367,7 +355,7 @@ _broadcast_api_queue () {
 		_print "$UUID/::/broadcast/::/$PUSHALL_ID/::/$PUSHALL_KEY/::/$TITLE/::/$TEXT/::/$ICON/::/$URL/::/$HIDDEN/::/$ENCODE/::/$PRIORITY/::/$TTL/::/$CA_BUNDLE" >> "$XDG_DATA_HOME/$CONF_SCRIPT_DIR/queue.txt"
 	fi
 
-	rm -rf "$LOCKDIR_QUEUE"
+	_lock_remove "queue"
 
 	_print "$UUID"
 
@@ -401,12 +389,7 @@ _queue_run() {
 
 		if [ ! "$READING_LINE"]; then
 
-			while ! mkdir $LOCKDIR_QUEUE 2>/dev/null; do
-				QUEUE_LOCK_PID=$(cat $PIDFILE_QUEUE)
-				[ -f $PIDFILE_QUEUE ] && ! kill -0 $QUEUE_LOCK_PID 2>/dev/null && rm -rf "$LOCKDIR_QUEUE"
-			done
-
-			echo $$ > $PIDFILE_QUEUE
+			_lock_set "queue"
 
 		fi
 
@@ -459,13 +442,13 @@ _queue_run() {
 		esac
 		sed -i 1d "$XDG_DATA_HOME/$CONF_SCRIPT_DIR/queue.txt"
 
-		rm -rf "$LOCKDIR_QUEUE"
+		_lock_remove "queue"
 
 		FULL_LINE=""
 
 	done < "$XDG_DATA_HOME/$CONF_SCRIPT_DIR/queue.txt"
 
-	rm -rf "$LOCKDIR_QUEUE" # In case of faulty data in queue
+	_lock_remove "queue" # In case of faulty data in queue
 
 	return 0;
 
@@ -486,14 +469,7 @@ _queue_delete() {
 
 	[ ! -f "$XDG_DATA_HOME/$CONF_SCRIPT_DIR/queue.txt" ] && return 0;
 
-	while ! mkdir $LOCKDIR_QUEUE 2>/dev/null; do
-		QUEUE_LOCK_PID=$(cat $PIDFILE_QUEUE)
-		[ -f $PIDFILE_QUEUE ] && ! kill -0 $QUEUE_LOCK_PID 2>/dev/null && rm -rf "$LOCKDIR_QUEUE"
-	done
-
-	echo $$ > $PIDFILE_QUEUE
-
-	trap "rm -rf ${LOCKDIR_QUEUE}" QUIT INT TERM EXIT
+	_lock_set "queue"
 
 	while read -r _line
 	do
@@ -503,7 +479,7 @@ _queue_delete() {
 
 		if [ $(echo "$FULL_LINE" | awk -F"/::/" '{print NF; exit}') -lt 13 ]; then
 			sed -i 1d "$XDG_DATA_HOME/$CONF_SCRIPT_DIR/queue.txt"
-			rm -rf "$LOCKDIR_QUEUE"
+			_lock_remove "queue"
 			continue
 		fi
 
@@ -517,7 +493,7 @@ _queue_delete() {
 
 	[ "$NEW_QUEUE" ] && _print -en "$NEW_QUEUE" > "$XDG_DATA_HOME/$CONF_SCRIPT_DIR/queue.txt"
 
-	rm -rf "$LOCKDIR_QUEUE"
+	_lock_remove "queue"
 
 	return 0;
 
@@ -527,18 +503,11 @@ _queue_clear() {
 
 	[ ! -f "$XDG_DATA_HOME/$CONF_SCRIPT_DIR/queue.txt" ] && return 0;
 
-	while ! mkdir $LOCKDIR_QUEUE 2>/dev/null; do
-		QUEUE_LOCK_PID=$(cat $PIDFILE_QUEUE)
-		[ -f $PIDFILE_QUEUE ] && ! kill -0 $QUEUE_LOCK_PID 2>/dev/null && rm -rf "$LOCKDIR_QUEUE"
-	done
-
-	echo $$ > $PIDFILE_QUEUE
-
-	trap "rm -rf ${LOCKDIR_QUEUE}" QUIT INT TERM EXIT
+	_lock_set "queue"
 
 	rm "$XDG_DATA_HOME/$CONF_SCRIPT_DIR/queue.txt"
 
-	rm -rf "$LOCKDIR_QUEUE"
+	_lock_remove "queue"
 
 }
 
@@ -592,6 +561,29 @@ _broadcast_api_check() {
 	
 	return 0;
 	
+}
+
+_lock_set () {
+
+	LOCK_NAME="$1";
+
+	while ! mkdir -p $LOCKDIR_$LOCK_NAME 2>/dev/null; do
+		LOCK_PID=$(cat $LOCKDIR_$LOCK_NAME/pid)
+		[ -f $LOCKDIR_$LOCK_NAME/pid ] && ! kill -0 $LOCK_PID 2>/dev/null && rm -rf "$LOCKDIR_$LOCK_NAME"
+	done
+
+	echo $$ > $LOCKDIR_$LOCK_NAME/pid
+	
+	trap "rm -rf $LOCKDIR_$LOCK_NAME" QUIT INT TERM EXIT
+
+}
+
+_lock_remove () {
+
+	LOCK_NAME="$1";
+
+	rm -rf $LOCKDIR_$LOCK_NAME;
+
 }
 
 _init
