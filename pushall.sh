@@ -94,6 +94,7 @@ _usage () {
 	_print "$SCRIPT_VERSION"
 	_print
 	_print "COMMAND can be:"
+	_print
 	_print -e "\t\tsend or empty - send specified API call"
 	_print -e "\t\tqueue [top] - store specified API call in sending queue (optionally to the top)"
 	_print -e "\t\trun - run sending queue respecting all timeouts"
@@ -101,16 +102,19 @@ _usage () {
 	_print -e "\t\tclear - clear current queue"
 	_print
 	_print "General options:"
+	_print
 	_print -e "\t-b\tCA bundle path for curl"
 	_print -e "\t-c\tAPI call"
+	_print -e "\t\t( Can be \"self\" or \"broadcast\" )"
 	_print -e "\t-h\tThis usage help"
 	_print
-	_print "Options for self API:"
+	_print "Options for self & broadcast API:"
+	_print
 	_print -e "\t-t\tPush message title (required)"
 	_print -e "\t-T\tPush message text (required)"
 	_print -e "\t-i\tPush message icon"
-	_print -e "\t-I\tYour pushall account ID (required)"
-	_print -e "\t-K\tYour pushall account key (required)"
+	_print -e "\t-I\tYour pushall account / channel ID (required)"
+	_print -e "\t-K\tYour pushall account / channel key (required)"
 	_print -e "\t-u\tPush message URL"
 	_print -e "\t-H\tHide option for push message"
 	_print -e "\t-e\tPush message encoding"
@@ -237,6 +241,66 @@ _self_api_call () {
 	
 }
 
+_broadcast_api_call () {
+
+	[ "$TITLE" ] && TITLE=$(_print -en "$TITLE")
+	[ "$TEXT" ] && TEXT=$(_print -en "$TEXT")
+	[ "$ICON" ] && ICON=$(_print -en "$ICON")
+	[ "$URL" ] && URL=$(_print -en "$URL")
+	[ "$ENCODE" ] && ENCODE=$(_print -en "$ENCODE")
+
+	PARAMLINE="--data-urlencode \"id=$PUSHALL_ID\" --data-urlencode \"key=$PUSHALL_KEY\" --data-urlencode \"title=$TITLE\" --data-urlencode \"text=$TEXT\""
+	
+	if [ "$ICON" ]; then
+		PARAMLINE="$PARAMLINE --data-urlencode \"icon=$ICON\""
+	fi
+	if [ "$URL" ]; then
+		PARAMLINE="$PARAMLINE --data-urlencode \"url=$URL\""
+	fi
+	if [ "$HIDDEN" ]; then
+		PARAMLINE="$PARAMLINE --data-urlencode \"hidden=$HIDDEN\""
+	fi
+	if [ "$ENCODE" ]; then
+		PARAMLINE="$PARAMLINE --data-urlencode \"encode=$ENCODE\""
+	fi
+	if [ "$PRIORITY" ]; then
+		PARAMLINE="$PARAMLINE --data-urlencode \"priority=$PRIORITY\""
+	fi
+	if [ "$TTL" ]; then
+		PARAMLINE="$PARAMLINE --data-urlencode \"ttl=$TTL\""
+	fi
+	
+	CURLARGS="-sS $PARAMLINE -X POST \"https://pushall.ru/api.php?type=broadcast\""
+	
+	if [ "$CA_BUNDLE" ]; then
+		CURLARGS="$CURLARGS --cacert \"$CA_BUNDLE\""
+	fi
+	
+	# Calling curl & capturing stdout, stderr and exit code using
+	# tagging approach by Warbo, ref: http://stackoverflow.com/a/37602314
+	CURLOUT=$({ { eval "curl $CURLARGS"; _print -e "EXITSTATUS:$?" >&2; } | sed -e 's/^/STDOUT:/g'; } 2>&1)
+	#_print "$CURLOUT"
+	CURLEXITSTATUS=$(_print "$CURLOUT" | grep "^EXITSTATUS:" | sed -e 's/^EXITSTATUS://g')
+	CURLSTDOUT=$(_print "$CURLOUT" | grep "^STDOUT:" | grep -v "^EXITSTATUS:" | sed -e 's/^STDOUT://g')
+	CURLSTDERR=$(_print "$CURLOUT" | grep -v "^STDOUT:\|^EXITSTATUS:")
+	
+	if [ $CURLEXITSTATUS -ne 0 ]; then
+		_print_err -e "Error in curl: $CURLSTDERR"
+		return 1;
+	else
+		CURLPARSED=$(_print "$CURLSTDOUT" | $SCRIPT_DIR/JSON.awk)
+		PUSHALL_ERROR=$(_print "$CURLPARSED" | grep "\[\"error\"\]" | sed 's/.*\t\(.*\)/\1/')
+		if [ "$PUSHALL_ERROR" ]; then
+			_print_err "API returned error: $PUSHALL_ERROR"
+			return 1;
+		fi
+		LID=$(_print "$CURLPARSED" | grep "\[\"lid\"\]" | sed 's/.*\t\(.*\)/\1/')
+		_print "$LID"
+		return 0;
+	fi
+	
+}
+
 _self_api_queue () {
 
 	case "$EXTRA" in
@@ -264,6 +328,43 @@ _self_api_queue () {
 		rm $XDG_DATA_HOME/$CONF_SCRIPT_DIR/queue.old
 	else
 		_print "$UUID/::/self/::/$PUSHALL_ID/::/$PUSHALL_KEY/::/$TITLE/::/$TEXT/::/$ICON/::/$URL/::/$HIDDEN/::/$ENCODE/::/$PRIORITY/::/$TTL/::/$CA_BUNDLE" >> "$XDG_DATA_HOME/$CONF_SCRIPT_DIR/queue.txt"
+	fi
+
+	rm -rf "$LOCKDIR_QUEUE"
+
+	_print "$UUID"
+
+	return 0;
+	
+}
+
+_broadcast_api_queue () {
+
+	case "$EXTRA" in
+
+		[Tt][Oo][Pp])
+			EXTRA="top"
+		;;
+
+	esac
+
+	while ! mkdir $LOCKDIR_QUEUE 2>/dev/null; do
+		QUEUE_LOCK_PID=$(cat $PIDFILE_QUEUE)
+		[ -f $PIDFILE_QUEUE ] && ! kill -0 $QUEUE_LOCK_PID 2>/dev/null && rm -rf "$LOCKDIR_QUEUE"
+	done
+
+	echo $$ > $PIDFILE_QUEUE
+
+	UUID=$(cat /proc/sys/kernel/random/uuid)
+
+	if [ "$EXTRA" = "top" ]; then
+		# TODO: Make checks against running out of space
+		mv $XDG_DATA_HOME/$CONF_SCRIPT_DIR/queue.txt $XDG_DATA_HOME/$CONF_SCRIPT_DIR/queue.old
+		_print "$UUID/::/broadcast/::/$PUSHALL_ID/::/$PUSHALL_KEY/::/$TITLE/::/$TEXT/::/$ICON/::/$URL/::/$HIDDEN/::/$ENCODE/::/$PRIORITY/::/$TTL/::/$CA_BUNDLE" > "$XDG_DATA_HOME/$CONF_SCRIPT_DIR/queue.txt"
+		cat $XDG_DATA_HOME/$CONF_SCRIPT_DIR/queue.old >> $XDG_DATA_HOME/$CONF_SCRIPT_DIR/queue.txt
+		rm $XDG_DATA_HOME/$CONF_SCRIPT_DIR/queue.old
+	else
+		_print "$UUID/::/broadcast/::/$PUSHALL_ID/::/$PUSHALL_KEY/::/$TITLE/::/$TEXT/::/$ICON/::/$URL/::/$HIDDEN/::/$ENCODE/::/$PRIORITY/::/$TTL/::/$CA_BUNDLE" >> "$XDG_DATA_HOME/$CONF_SCRIPT_DIR/queue.txt"
 	fi
 
 	rm -rf "$LOCKDIR_QUEUE"
@@ -342,6 +443,15 @@ _queue_run() {
 					sleep 1;
 				done
 				_self_api_check && _self_api_call && SELF_LAST=$(date +%s)
+			;;
+			[Bb][Rr][Oo][Aa][Dd][Cc][Aa][Ss][Tt])
+				while true; do
+					if [ ! "$BROADCAST_LAST" ] || [ $(($(date +%s) - $BROADCAST_LAST)) -gt 30 ]; then
+						break
+					fi
+					sleep 1;
+				done
+				_broadcast_api_check && _broadcast_api_call && BROADCAST_LAST=$(date +%s)
 			;;
 			*)
 				_print_err "Unknown API: \"$PUSHALL_API\""
@@ -458,6 +568,32 @@ _self_api_check() {
 	
 }
 
+_broadcast_api_check() {
+
+	if [ ! "$TITLE" ]; then
+		_print_err "Title (-t) is required for broadcast API call"
+		return 1;
+	fi
+	
+	if [ ! "$TEXT" ]; then
+		_print_err "Text (-T) is required for broadcast API call"
+		return 1;
+	fi
+	
+	if [ ! "$PUSHALL_ID" ]; then
+		_print_err "Pushall ID (-I) is required for broadcast API call"
+		return 1;
+	fi
+	
+	if [ ! "$PUSHALL_KEY" ]; then
+		_print_err "Pushall key (-K) is required for broadcast API call"
+		return 1;
+	fi
+	
+	return 0;
+	
+}
+
 _init
 _parse_options "$@"
 shift $((OPTIND-1));
@@ -471,6 +607,9 @@ case "$COMMAND" in
 			[Ss][Ee][Ll][Ff])
 				_self_api_check && _self_api_call
 			;;
+			[Bb][Rr][Oo][Aa][Dd][Cc][Aa][Ss][Tt])
+				_broadcast_api_check && _broadcast_api_call
+			;;
 			*)
 				_print_err "Unknown API: \"$PUSHALL_API\""
 				exit 1;
@@ -481,6 +620,9 @@ case "$COMMAND" in
 		case "$PUSHALL_API" in
 			[Ss][Ee][Ll][Ff])
 				_self_api_check && _self_api_queue
+			;;
+				[Bb][Rr][Oo][Aa][Dd][Cc][Aa][Ss][Tt])
+				_broadcast_api_check && _broadcast_api_queue
 			;;
 			*)
 				_print_err "Unknown API: \"$PUSHALL_API\""
