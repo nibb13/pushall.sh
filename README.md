@@ -78,10 +78,11 @@ Any mentions, suggestions, pull-requests, bug reports, usage reports etc. are we
 ## Thanks
 
 [PushAll](https://pushall.ru) staff for nice service.  
-[D-Link](http://dlink.com) for outstanding hardware.
+[D-Link](http://dlink.com) for outstanding hardware.  
+[step-](https://github.com/step-) for [JSON.awk](https://github.com/step-/JSON.awk).
 
 ## Contacts
 
 <nibble@list.ru>  
 
-Last update: 04.10.2017
+Last update: 06.10.2017
