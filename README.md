@@ -8,6 +8,7 @@ v. 0.1.1-alpha
 ## Features
 
 * Self API
+* Broadcast API
 * Queueing
 
 ## Requirements
@@ -49,6 +50,9 @@ Script uses `$XDG_DATA_HOME` defaulting to `~/.local/share`
 `./pushall.sh -c self -t "Title" -T "Text" -u "http://yourdomain.com/messagetargeturl" -I "pushall_id" -K "pushall_key" queue top`  
 *(Will return unique ID for message in queue)*
 
+**Broadcast API messages**
+Replace `-c self` by `-c broadcast` in above samples and use your channel ID / channel key instead of account ID / key.
+
 **Run existing queue obeying API timeouts**
 
 `./pushall.sh run`  
@@ -85,4 +89,4 @@ Any mentions, suggestions, pull-requests, bug reports, usage reports etc. are we
 
 <nibble@list.ru>  
 
-Last update: 06.10.2017
+Last update: 08.10.2017

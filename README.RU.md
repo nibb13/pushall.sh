@@ -8,6 +8,7 @@ v. 0.1.1-alpha
 ## Функциональность
 
 * Self API
+* Broadcast API
 * Очередь отправки
 
 ## Требования
@@ -48,6 +49,9 @@ v. 0.1.1-alpha
 
 `./pushall.sh -c self -t "Title" -T "Text" -u "http://yourdomain.com/messagetargeturl" -I "pushall_id" -K "pushall_key" queue top`  
 *(Вернёт уникальный ID сообщения в очереди)*
+
+**Отправка сообщений через Broadcast API**
+Замените в примерах выше `-c self` на `-c broadcast` и используйте ID / ключ от канала вместо пользовательского.
 
 **Выполнение существующей очереди с соблюдением тайм-аутов API**
 
