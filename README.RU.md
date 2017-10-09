@@ -2,8 +2,8 @@
 
 Реализация [API pushall.ru](https://pushall.ru/blog/api) на POSIX-совместимом Shell-script.
 
-v. 0.1.1-alpha  
-[![Build Status](https://travis-ci.org/nibb13/pushall.sh.svg?branch=develop)](https://travis-ci.org/nibb13/pushall.sh)
+v. 0.1.2-alpha  
+[![Build Status](https://travis-ci.org/nibb13/pushall.sh.svg?branch=release-0.1.2-alpha)](https://travis-ci.org/nibb13/pushall.sh)
 
 ## Функциональность
 

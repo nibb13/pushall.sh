@@ -8,7 +8,7 @@ _check_cmd () {
 
 _init () {
 
-	SCRIPT_VERSION="v 0.1.1-alpha"
+	SCRIPT_VERSION="v 0.1.2-alpha"
 
 	CONF_SCRIPT_DIR=".pushall.sh";
 	SCRIPT_DIR=$(dirname "$0")
