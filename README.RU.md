@@ -70,6 +70,7 @@ v. 0.1.2-alpha
 ## Известные проблемы и ограничения
 
 * ~~Все используемые блокировки общесистемные, в то время как очереди - нет.~~ (Issue [#12](https://github.com/nibb13/pushall.sh/issues/12), закрыто в [2f68761](https://github.com/nibb13/pushall.sh/commit/2f68761b95c11cbda751d4bb4cdebad1e54059ad))
+* Если curl возвращает ошибку 60 (*"curl: (60) SSL certificate problem, verify that the CA cert is OK."*), то используйте ключ `-b <ca bundle path>` для всех вызовов API и добавления в очередь. Сам CA bundle можно скачать [здесь](https://curl.haxx.se/docs/caextract.html).
 
 ## Бенчмарки
 
@@ -89,4 +90,4 @@ v. 0.1.2-alpha
 
 <nibble@list.ru>  
 
-Last update: 09.10.2017
+Last update: 10.10.2017

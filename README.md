@@ -70,6 +70,7 @@ Replace `-c self` by `-c broadcast` in above samples and use your channel ID / c
 ## Troubleshooting & caveats
 
 * ~~All used locks are system-wide while queues aren't.~~ (Issue [#12](https://github.com/nibb13/pushall.sh/issues/12), closed in [2f68761](https://github.com/nibb13/pushall.sh/commit/2f68761b95c11cbda751d4bb4cdebad1e54059ad))
+* If curl returns "exit code 60" with message *"curl: (60) SSL certificate problem, verify that the CA cert is OK."* then use `-b <ca bundle path>` for API calls & queue adding. You can get CA bundle [here](https://curl.haxx.se/docs/caextract.html).
 
 ## Benchmarks
 
@@ -89,4 +90,4 @@ Any mentions, suggestions, pull-requests, bug reports, usage reports etc. are we
 
 <nibble@list.ru>  
 
-Last update: 09.10.2017
+Last update: 10.10.2017
