@@ -387,7 +387,7 @@ _queue_run() {
 	while read -r _line
 	do
 
-		if [ ! "$READING_LINE"]; then
+		if [ ! "$READING_LINE" ]; then
 
 			_lock_set "queue"
 
