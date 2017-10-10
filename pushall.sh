@@ -449,6 +449,7 @@ _queue_run() {
 	done < "$XDG_DATA_HOME/$CONF_SCRIPT_DIR/queue.txt"
 
 	_lock_remove "queue" # In case of faulty data in queue
+	rm -rf ${LOCKDIR}
 
 	return 0;
 
