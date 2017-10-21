@@ -2,13 +2,14 @@
 
 Реализация [API pushall.ru](https://pushall.ru/blog/api) на POSIX-совместимом Shell-script.
 
-v. 0.1.2-alpha  
+v. 0.1.3-alpha  
 [![Build Status](https://travis-ci.org/nibb13/pushall.sh.svg?branch=develop)](https://travis-ci.org/nibb13/pushall.sh)
 
 ## Функциональность
 
 * Self API
 * Broadcast API
+* Multicast API
 * Очередь отправки
 
 ## Требования
@@ -53,6 +54,9 @@ v. 0.1.2-alpha
 **Отправка сообщений через Broadcast API**
 Замените в примерах выше `-c self` на `-c broadcast` и используйте ID / ключ от канала вместо пользовательского.
 
+**Отправка сообщений через Multicast API**
+Так же, как и broadcast, только с `-c multicast`. Не забудьте указать UIDs (-U) в формате "[1,2,3]" или "1,2,3"
+
 **Выполнение существующей очереди с соблюдением тайм-аутов API**
 
 `./pushall.sh run`  
@@ -90,4 +94,4 @@ v. 0.1.2-alpha
 
 <nibble@list.ru>  
 
-Last update: 10.10.2017
+Last update: 21.10.2017
