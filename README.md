@@ -58,6 +58,10 @@ Replace `-c self` by `-c broadcast` in above samples and use your channel ID / c
 **Multicast API messages**
 Same as brodcast, but with `-c multicast`. Don't forget to set UIDs (-U) either in "[1,2,3]" or "1,2,3" format.
 
+**Unicast API messages**
+Same as multicast, but with `-c unicast`. UID (-U) is now single number.
+*(Will return number of devices which got your message or error message from API)*
+
 **Run existing queue obeying API timeouts**
 
 `./pushall.sh run`  
