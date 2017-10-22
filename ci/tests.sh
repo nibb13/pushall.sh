@@ -28,6 +28,11 @@ if [ "\$*" = "-sS --data-urlencode id=pushall_id --data-urlencode key=pushall_ke
 	exit 0
 fi
 
+if [ "\$*" = "-sS --data-urlencode id=pushall_id --data-urlencode key=pushall_key --data-urlencode title=Title --data-urlencode text=Text --data-urlencode uid=31337 --data-urlencode icon=http://test.com/icon.png --data-urlencode url=http://google.com --data-urlencode hidden=2 --data-urlencode encode=utf8 --data-urlencode priority=1 --data-urlencode ttl=300 --data-urlencode filter=1 -X POST https://pushall.ru/api.php?type=unicast" ]; then
+	printf "%b\n" "{\"success\":1}"
+	exit 0
+fi
+
 if [ "\$*" = "-sS --data-urlencode id=pushall_id --data-urlencode key=pushall_key --data-urlencode title=Title --data-urlencode text=Unreachable test -X POST https://pushall.ru/api.php?type=self" ]; then
 	printf "%s\n" "curl: (6) Couldn't resolve host 'pushall.ru'"
 	exit 6
@@ -43,6 +48,11 @@ if [ "\$*" = "-sS --data-urlencode id=pushall_id --data-urlencode key=pushall_ke
 	exit 6
 fi
 
+if [ "\$*" = "-sS --data-urlencode id=pushall_id --data-urlencode key=pushall_key --data-urlencode title=Title --data-urlencode text=Unreachable test --data-urlencode uid=31337 -X POST https://pushall.ru/api.php?type=unicast" ]; then
+	printf "%s\n" "curl: (6) Couldn't resolve host 'pushall.ru'"
+	exit 6
+fi
+
 if [ "\$*" = "-sS --data-urlencode id=pushall_id --data-urlencode key=pushall_key --data-urlencode title=Title --data-urlencode text=API error test -X POST https://pushall.ru/api.php?type=self" ]; then
 	printf "%b\n" "{\\"error\\":\\"wrong key\\"}"
 	exit 0
@@ -54,6 +64,11 @@ if [ "\$*" = "-sS --data-urlencode id=pushall_id --data-urlencode key=pushall_ke
 fi
 
 if [ "\$*" = "-sS --data-urlencode id=pushall_id --data-urlencode key=pushall_key --data-urlencode title=Title --data-urlencode text=API error test --data-urlencode uids=[1,2,3] -X POST https://pushall.ru/api.php?type=multicast" ]; then
+	printf "%b\n" "{\\"error\\":\\"wrong key\\"}"
+	exit 0
+fi
+
+if [ "\$*" = "-sS --data-urlencode id=pushall_id --data-urlencode key=pushall_key --data-urlencode title=Title --data-urlencode text=API error test --data-urlencode uid=31337 -X POST https://pushall.ru/api.php?type=unicast" ]; then
 	printf "%b\n" "{\\"error\\":\\"wrong key\\"}"
 	exit 0
 fi
@@ -94,6 +109,8 @@ assert "./pushall.sh -c broadcast -t \"Title\" -T \"Text\" -i \"http://test.com/
 assert "./pushall.sh -c multicast -t \"Title\" -T \"Text\" -i \"http://test.com/icon.png\" -I \"pushall_id\" -K \"pushall_key\" -u \"http://google.com\" -H 2 -e \"utf8\" -p 1 -l 300 -f -1 -U \"1,123,3\" 2>&1" "11539073"
 # multicast call with alternate UIDs syntax
 assert "./pushall.sh -c multicast -t \"Title\" -T \"Text\" -i \"http://test.com/icon.png\" -I \"pushall_id\" -K \"pushall_key\" -u \"http://google.com\" -H 2 -e \"utf8\" -p 1 -l 300 -f -1 -U \"[1,123,3]\" 2>&1" "11539073"
+# unicast call with all usable params
+assert "./pushall.sh -c unicast -t \"Title\" -T \"Text\" -i \"http://test.com/icon.png\" -I \"pushall_id\" -K \"pushall_key\" -u \"http://google.com\" -H 2 -e \"utf8\" -p 1 -l 300 -f 1 -U 31337 2>&1" "1"
 
 assert_end "INSTANT CALLS"
 
@@ -223,6 +240,27 @@ assert_raises "./pushall.sh -c multicast -t \"Title\" -T \"Unreachable test\" -I
 # API error (malformed data etc.)
 assert_raises "./pushall.sh -c multicast -t \"Title\" -T \"API error test\" -I \"pushall_id\" -K \"pushall_key\" -U \"1,2,3\" 2>&1" 1
 assert "./pushall.sh -c multicast -t \"Title\" -T \"API error test\" -I \"pushall_id\" -K \"pushall_key\" -U \"1,2,3\" 2>&1" "API returned error: \"wrong key\""
+
+# unicast
+# No account ID set (-I)
+assert_raises "./pushall.sh -c unicast -t \"Title\" -T \"Text\" -K \"pushall_key\" -U 31337 2>&1" 1
+# No account key set (-K)
+assert_raises "./pushall.sh -c unicast -t \"Title\" -T \"Text\" -I \"pushall_id\" -U 31337 2>&1" 1
+# No message title set (-t)
+assert_raises "./pushall.sh -c unicast -T \"Text\" -I \"pushall_id\" -K \"pushall_key\" -U 31337 2>&1" 1
+# No message body set (-T)
+assert_raises "./pushall.sh -c unicast -t \"Title\" -I \"pushall_id\" -K \"pushall_key\" -U 31337 2>&1" 1
+# No UID set (-U)
+assert_raises "./pushall.sh -c unicast -t \"Title\" -T \"Text\" -I \"pushall_id\" -K \"pushall_key\" 2>&1" 1
+# Malformed UID ("nonnumeric")
+assert_raises "./pushall.sh -c unicast -t \"Title\" -T \"Text\" -I \"pushall_id\" -K \"pushall_key\" -U nonnumeric 2>&1" 1
+# Wrong command supplied
+assert_raises "./pushall.sh -c unicast -t \"Title\" -T \"Text\" -I \"pushall_id\" -K \"pushall_key\" -U 31337 wrongcmd 2>&1" 1
+# Curl error (server is unreachable)
+assert_raises "./pushall.sh -c unicast -t \"Title\" -T \"Unreachable test\" -I \"pushall_id\" -K \"pushall_key\" -U 31337 2>&1" 1
+# API error (malformed data etc.)
+assert_raises "./pushall.sh -c unicast -t \"Title\" -T \"API error test\" -I \"pushall_id\" -K \"pushall_key\" -U 31337 2>&1" 1
+assert "./pushall.sh -c unicast -t \"Title\" -T \"API error test\" -I \"pushall_id\" -K \"pushall_key\" -U 31337 2>&1" "API returned error: \"wrong key\""
 
 # Multiple instance queue run
 ./pushall.sh -c self -t "Title" -T "Text" -I "pushall_id" -K "pushall_key" queue >/dev/null
