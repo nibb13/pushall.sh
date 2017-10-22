@@ -678,12 +678,12 @@ _broadcast_api_check() {
 	fi
 	
 	if [ ! "$PUSHALL_ID" ]; then
-		_print_err "Pushall ID (-I) is required for broadcast API call"
+		_print_err "Channel ID (-I) is required for broadcast API call"
 		return 1;
 	fi
 	
 	if [ ! "$PUSHALL_KEY" ]; then
-		_print_err "Pushall key (-K) is required for broadcast API call"
+		_print_err "Channel key (-K) is required for broadcast API call"
 		return 1;
 	fi
 	
@@ -704,12 +704,12 @@ _multicast_api_check() {
 	fi
 	
 	if [ ! "$PUSHALL_ID" ]; then
-		_print_err "Pushall ID (-I) is required for multicast API call"
+		_print_err "Channel ID (-I) is required for multicast API call"
 		return 1;
 	fi
 	
 	if [ ! "$PUSHALL_KEY" ]; then
-		_print_err "Pushall key (-K) is required for multicast API call"
+		_print_err "Channel key (-K) is required for multicast API call"
 		return 1;
 	fi
 
@@ -780,10 +780,10 @@ case "$COMMAND" in
 			[Ss][Ee][Ll][Ff])
 				_self_api_check && _self_api_queue
 			;;
-				[Bb][Rr][Oo][Aa][Dd][Cc][Aa][Ss][Tt])
+			[Bb][Rr][Oo][Aa][Dd][Cc][Aa][Ss][Tt])
 				_broadcast_api_check && _broadcast_api_queue
 			;;
-				[Mm][Uu][Ll][Tt][Ii][Cc][Aa][Ss][Tt])
+			[Mm][Uu][Ll][Tt][Ii][Cc][Aa][Ss][Tt])
 				_multicast_api_check && _multicast_api_queue
 			;;
 			*)
