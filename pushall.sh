@@ -86,7 +86,7 @@ _print_err () {
 
 _usage () {
 
-	_print "Usage: $0 -cIKtT [-beHilpuh] [COMMAND]"
+	_print "Usage: $0 -cIKtT [-beHilpuhfU] [COMMAND]"
 	_print
 	_print "API calls to pushall.ru"
 	_print "$SCRIPT_VERSION"
