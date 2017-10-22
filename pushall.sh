@@ -119,10 +119,13 @@ _usage () {
 	_print -e "\t-p\tPush message priority"
 	_print -e "\t-l\tPush message TTL"
 	_print
+	_print "Options for broadcast & multicast API:"
+	_print
+	_print -e "\t-f\tPush message filter"
+	_print
 	_print "Options for multicast API:"
 	_print
 	_print -e "\t-U\tUIDs (\"[1,2,3]\" or \"1,2,3\")"
-	_print -e "\t-f\tPush message filter"
 	_print
 
 }
@@ -257,6 +260,7 @@ _broadcast_api_call () {
 	[ "$ICON" ] && ICON=$(_print -en "$ICON")
 	[ "$URL" ] && URL=$(_print -en "$URL")
 	[ "$ENCODE" ] && ENCODE=$(_print -en "$ENCODE")
+	[ "$FILTER" ] && FILTER=$(_print -en "$FILTER")
 
 	PARAMLINE="--data-urlencode \"id=$PUSHALL_ID\" --data-urlencode \"key=$PUSHALL_KEY\" --data-urlencode \"title=$TITLE\" --data-urlencode \"text=$TEXT\""
 	
@@ -277,6 +281,9 @@ _broadcast_api_call () {
 	fi
 	if [ "$TTL" ]; then
 		PARAMLINE="$PARAMLINE --data-urlencode \"ttl=$TTL\""
+	fi
+	if [ "$FILTER" ]; then
+		PARAMLINE="$PARAMLINE --data-urlencode \"filter=$FILTER\""
 	fi
 	
 	CURLARGS="-sS $PARAMLINE -X POST \"https://pushall.ru/api.php?type=broadcast\""
@@ -425,11 +432,11 @@ _broadcast_api_queue () {
 	if [ "$EXTRA" = "top" ]; then
 		# TODO: Make checks against running out of space
 		mv $XDG_DATA_HOME/$CONF_SCRIPT_DIR/queue.txt $XDG_DATA_HOME/$CONF_SCRIPT_DIR/queue.old
-		_print "$UUID/::/broadcast/::/$PUSHALL_ID/::/$PUSHALL_KEY/::/$TITLE/::/$TEXT/::/$ICON/::/$URL/::/$HIDDEN/::/$ENCODE/::/$PRIORITY/::/$TTL/:://:://::/$CA_BUNDLE" > "$XDG_DATA_HOME/$CONF_SCRIPT_DIR/queue.txt"
+		_print "$UUID/::/broadcast/::/$PUSHALL_ID/::/$PUSHALL_KEY/::/$TITLE/::/$TEXT/::/$ICON/::/$URL/::/$HIDDEN/::/$ENCODE/::/$PRIORITY/::/$TTL/:://::/$FILTER/::/$CA_BUNDLE" > "$XDG_DATA_HOME/$CONF_SCRIPT_DIR/queue.txt"
 		cat $XDG_DATA_HOME/$CONF_SCRIPT_DIR/queue.old >> $XDG_DATA_HOME/$CONF_SCRIPT_DIR/queue.txt
 		rm $XDG_DATA_HOME/$CONF_SCRIPT_DIR/queue.old
 	else
-		_print "$UUID/::/broadcast/::/$PUSHALL_ID/::/$PUSHALL_KEY/::/$TITLE/::/$TEXT/::/$ICON/::/$URL/::/$HIDDEN/::/$ENCODE/::/$PRIORITY/::/$TTL/:://:://::/$CA_BUNDLE" >> "$XDG_DATA_HOME/$CONF_SCRIPT_DIR/queue.txt"
+		_print "$UUID/::/broadcast/::/$PUSHALL_ID/::/$PUSHALL_KEY/::/$TITLE/::/$TEXT/::/$ICON/::/$URL/::/$HIDDEN/::/$ENCODE/::/$PRIORITY/::/$TTL/:://::/$FILTER/::/$CA_BUNDLE" >> "$XDG_DATA_HOME/$CONF_SCRIPT_DIR/queue.txt"
 	fi
 
 	_lock_remove "queue"

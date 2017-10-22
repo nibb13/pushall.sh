@@ -18,7 +18,7 @@ if [ "\$*" = "-sS --data-urlencode id=pushall_id --data-urlencode key=pushall_ke
 	exit 0
 fi
 
-if [ "\$*" = "-sS --data-urlencode id=pushall_id --data-urlencode key=pushall_key --data-urlencode title=Title --data-urlencode text=Text --data-urlencode icon=http://test.com/icon.png --data-urlencode url=http://google.com --data-urlencode hidden=2 --data-urlencode encode=utf8 --data-urlencode priority=1 --data-urlencode ttl=300 -X POST https://pushall.ru/api.php?type=broadcast" ]; then
+if [ "\$*" = "-sS --data-urlencode id=pushall_id --data-urlencode key=pushall_key --data-urlencode title=Title --data-urlencode text=Text --data-urlencode icon=http://test.com/icon.png --data-urlencode url=http://google.com --data-urlencode hidden=2 --data-urlencode encode=utf8 --data-urlencode priority=1 --data-urlencode ttl=300 --data-urlencode filter=-1 -X POST https://pushall.ru/api.php?type=broadcast" ]; then
 	printf "%b\n" "{\\"ttl\\":2160000,\\"unfuid\\":[],\\"filtuid\\":[],\\"benchmark\\":{\\"start\\":\\"0.10005700 1508622329\\"},\\"lid\\":11539072,\\"status\\":\\"Run in background\\",\\"success\\":1}"
 	exit 0
 fi
@@ -89,7 +89,7 @@ assert "./pushall.sh -c self -t \"Title\" -T \"Text\" -I \"pushall_id\" -K \"pus
 # self call with all usable params
 assert "./pushall.sh -c self -t \"Title\" -T \"Text\" -i \"http://test.com/icon.png\" -I \"pushall_id\" -K \"pushall_key\" -u \"http://google.com\" -H 2 -e \"utf8\" -p 1 -l 300 2>&1" "6546003"
 # broadcast call with all usable params
-assert "./pushall.sh -c broadcast -t \"Title\" -T \"Text\" -i \"http://test.com/icon.png\" -I \"pushall_id\" -K \"pushall_key\" -u \"http://google.com\" -H 2 -e \"utf8\" -p 1 -l 300 2>&1" "11539072"
+assert "./pushall.sh -c broadcast -t \"Title\" -T \"Text\" -i \"http://test.com/icon.png\" -I \"pushall_id\" -K \"pushall_key\" -u \"http://google.com\" -H 2 -e \"utf8\" -p 1 -l 300 -f -1 2>&1" "11539072"
 # multicast call with all usable params
 assert "./pushall.sh -c multicast -t \"Title\" -T \"Text\" -i \"http://test.com/icon.png\" -I \"pushall_id\" -K \"pushall_key\" -u \"http://google.com\" -H 2 -e \"utf8\" -p 1 -l 300 -f -1 -U \"1,123,3\" 2>&1" "11539073"
 # multicast call with alternate UIDs syntax
