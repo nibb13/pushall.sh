@@ -2,7 +2,7 @@
 
 POSIX-shell implementation of [pushall.ru API](https://pushall.ru/blog/api).
 
-v. 0.1.3-alpha  
+v. 0.1.4-alpha  
 [![Build Status](https://travis-ci.org/nibb13/pushall.sh.svg?branch=develop)](https://travis-ci.org/nibb13/pushall.sh)
 
 ## Features
@@ -10,6 +10,7 @@ v. 0.1.3-alpha
 * Self API
 * Broadcast API
 * Multicast API
+* Unicast API
 * Queueing
 
 ## Requirements
