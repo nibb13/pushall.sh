@@ -53,15 +53,18 @@ Script uses `$XDG_DATA_HOME` defaulting to `~/.local/share`
 *(Will return unique ID for message in queue)*
 
 **Broadcast API messages**
-Replace `-c self` by `-c broadcast` in above samples and use your channel ID / channel key instead of account ID / key.
+
+Replace `-c self` by `-c broadcast` in above samples and use your channel ID / channel key instead of account ID / key.  
 *(Will return LID or error message from API)*
 
 **Multicast API messages**
-Same as brodcast, but with `-c multicast`. Don't forget to set UIDs (-U) either in "[1,2,3]" or "1,2,3" format.
+
+Same as brodcast, but with `-c multicast`. Don't forget to set UIDs (-U) either in "[1,2,3]" or "1,2,3" format.  
 *(Will return LID or error message from API)*
 
 **Unicast API messages**
-Same as multicast, but with `-c unicast`. UID (-U) is now single number.
+
+Same as multicast, but with `-c unicast`. UID (-U) is now single number.  
 *(Will return number of devices which got your message or error message from API)*
 
 **Run existing queue obeying API timeouts**
@@ -101,4 +104,4 @@ Any mentions, suggestions, pull-requests, bug reports, usage reports etc. are we
 
 <nibble@list.ru>  
 
-Last update: 22.10.2017
+Last update: 23.10.2017
