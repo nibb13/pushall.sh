@@ -103,10 +103,10 @@ _usage () {
 	_print
 	_print -e "\t-b\tCA bundle path for curl"
 	_print -e "\t-c\tAPI call"
-	_print -e "\t\t( Can be \"self\", \"broadcast\" or \"multicast\" )"
+	_print -e "\t\t( Can be \"self\", \"broadcast\" , \"multicast\" or \"unicast\" )"
 	_print -e "\t-h\tThis usage help"
 	_print
-	_print "Options for self & broadcast API:"
+	_print "Options for self / broadcast / multicast / unicast APIs:"
 	_print
 	_print -e "\t-t\tPush message title (required)"
 	_print -e "\t-T\tPush message text (required)"
@@ -119,13 +119,17 @@ _usage () {
 	_print -e "\t-p\tPush message priority"
 	_print -e "\t-l\tPush message TTL"
 	_print
-	_print "Options for broadcast & multicast API:"
+	_print "Options for broadcast / multicast / unicast API:"
 	_print
 	_print -e "\t-f\tPush message filter"
 	_print
 	_print "Options for multicast API:"
 	_print
 	_print -e "\t-U\tUIDs (\"[1,2,3]\" or \"1,2,3\")"
+	_print
+	_print "Options for unicast API:"
+	_print
+	_print -e "\t-U\tUID (single number)"
 	_print
 
 }
