@@ -8,7 +8,7 @@ _check_cmd () {
 
 _init () {
 
-	SCRIPT_VERSION="v 0.1.2-alpha"
+	SCRIPT_VERSION="v 0.1.3-alpha"
 
 	CONF_SCRIPT_DIR=".pushall.sh";
 	SCRIPT_DIR=$(dirname "$0")
@@ -86,7 +86,7 @@ _print_err () {
 
 _usage () {
 
-	_print "Usage: $0 -cIKtT [-beHilpuh] [COMMAND]"
+	_print "Usage: $0 -cIKtT [-beHilpuhfU] [COMMAND]"
 	_print
 	_print "API calls to pushall.ru"
 	_print "$SCRIPT_VERSION"
@@ -103,7 +103,7 @@ _usage () {
 	_print
 	_print -e "\t-b\tCA bundle path for curl"
 	_print -e "\t-c\tAPI call"
-	_print -e "\t\t( Can be \"self\" or \"broadcast\" )"
+	_print -e "\t\t( Can be \"self\", \"broadcast\" or \"multicast\" )"
 	_print -e "\t-h\tThis usage help"
 	_print
 	_print "Options for self & broadcast API:"
@@ -119,6 +119,14 @@ _usage () {
 	_print -e "\t-p\tPush message priority"
 	_print -e "\t-l\tPush message TTL"
 	_print
+	_print "Options for broadcast & multicast API:"
+	_print
+	_print -e "\t-f\tPush message filter"
+	_print
+	_print "Options for multicast API:"
+	_print
+	_print -e "\t-U\tUIDs (\"[1,2,3]\" or \"1,2,3\")"
+	_print
 
 }
 
@@ -129,7 +137,7 @@ _parse_options () {
 		exit 0;
 	fi
 
-	while getopts "hH:c:t:T:i:u:e:p:l:b:I:K:" opt
+	while getopts "hH:c:t:T:i:u:e:p:l:b:I:K:f:U:" opt
 	do
 		case "$opt" in
 			h)
@@ -171,6 +179,12 @@ _parse_options () {
 			;;
 			K)
 				PUSHALL_KEY="$OPTARG";
+			;;
+			f)
+				FILTER="$OPTARG";
+			;;
+			U)
+				UIDS="$OPTARG";
 			;;
 		esac
 	done
@@ -246,6 +260,7 @@ _broadcast_api_call () {
 	[ "$ICON" ] && ICON=$(_print -en "$ICON")
 	[ "$URL" ] && URL=$(_print -en "$URL")
 	[ "$ENCODE" ] && ENCODE=$(_print -en "$ENCODE")
+	[ "$FILTER" ] && FILTER=$(_print -en "$FILTER")
 
 	PARAMLINE="--data-urlencode \"id=$PUSHALL_ID\" --data-urlencode \"key=$PUSHALL_KEY\" --data-urlencode \"title=$TITLE\" --data-urlencode \"text=$TEXT\""
 	
@@ -267,8 +282,77 @@ _broadcast_api_call () {
 	if [ "$TTL" ]; then
 		PARAMLINE="$PARAMLINE --data-urlencode \"ttl=$TTL\""
 	fi
+	if [ "$FILTER" ]; then
+		PARAMLINE="$PARAMLINE --data-urlencode \"filter=$FILTER\""
+	fi
 	
 	CURLARGS="-sS $PARAMLINE -X POST \"https://pushall.ru/api.php?type=broadcast\""
+	
+	if [ "$CA_BUNDLE" ]; then
+		CURLARGS="$CURLARGS --cacert \"$CA_BUNDLE\""
+	fi
+	
+	# Calling curl & capturing stdout, stderr and exit code using
+	# tagging approach by Warbo, ref: http://stackoverflow.com/a/37602314
+	CURLOUT=$({ { eval "curl $CURLARGS"; _print -e "EXITSTATUS:$?" >&2; } | sed -e 's/^/STDOUT:/g'; } 2>&1)
+	#_print "$CURLOUT"
+	CURLEXITSTATUS=$(_print "$CURLOUT" | grep "^EXITSTATUS:" | sed -e 's/^EXITSTATUS://g')
+	CURLSTDOUT=$(_print "$CURLOUT" | grep "^STDOUT:" | grep -v "^EXITSTATUS:" | sed -e 's/^STDOUT://g')
+	CURLSTDERR=$(_print "$CURLOUT" | grep -v "^STDOUT:\|^EXITSTATUS:")
+	
+	if [ $CURLEXITSTATUS -ne 0 ]; then
+		_print_err -e "Error in curl: $CURLSTDERR"
+		return 1;
+	else
+		CURLPARSED=$(_print "$CURLSTDOUT" | $SCRIPT_DIR/JSON.awk)
+		PUSHALL_ERROR=$(_print "$CURLPARSED" | grep "\[\"error\"\]" | sed 's/.*\t\(.*\)/\1/')
+		if [ "$PUSHALL_ERROR" ]; then
+			_print_err "API returned error: $PUSHALL_ERROR"
+			return 1;
+		fi
+		LID=$(_print "$CURLPARSED" | grep "\[\"lid\"\]" | sed 's/.*\t\(.*\)/\1/')
+		_print "$LID"
+		return 0;
+	fi
+	
+}
+
+_multicast_api_call () {
+
+	[ "$TITLE" ] && TITLE=$(_print -en "$TITLE")
+	[ "$TEXT" ] && TEXT=$(_print -en "$TEXT")
+	[ "$ICON" ] && ICON=$(_print -en "$ICON")
+	[ "$URL" ] && URL=$(_print -en "$URL")
+	[ "$ENCODE" ] && ENCODE=$(_print -en "$ENCODE")
+	[ "$FILTER" ] && FILTER=$(_print -en "$FILTER")
+	[ "$UIDS" ] && UIDS=$(_print -en "$UIDS")
+	_print "$UIDS" | grep '\[' >/dev/null 2>&1 || UIDS=$(_print "[$UIDS]")
+
+	PARAMLINE="--data-urlencode \"id=$PUSHALL_ID\" --data-urlencode \"key=$PUSHALL_KEY\" --data-urlencode \"title=$TITLE\" --data-urlencode \"text=$TEXT\" --data-urlencode \"uids=$UIDS\""
+	
+	if [ "$ICON" ]; then
+		PARAMLINE="$PARAMLINE --data-urlencode \"icon=$ICON\""
+	fi
+	if [ "$URL" ]; then
+		PARAMLINE="$PARAMLINE --data-urlencode \"url=$URL\""
+	fi
+	if [ "$HIDDEN" ]; then
+		PARAMLINE="$PARAMLINE --data-urlencode \"hidden=$HIDDEN\""
+	fi
+	if [ "$ENCODE" ]; then
+		PARAMLINE="$PARAMLINE --data-urlencode \"encode=$ENCODE\""
+	fi
+	if [ "$PRIORITY" ]; then
+		PARAMLINE="$PARAMLINE --data-urlencode \"priority=$PRIORITY\""
+	fi
+	if [ "$TTL" ]; then
+		PARAMLINE="$PARAMLINE --data-urlencode \"ttl=$TTL\""
+	fi
+	if [ "$FILTER" ]; then
+		PARAMLINE="$PARAMLINE --data-urlencode \"filter=$FILTER\""
+	fi
+	
+	CURLARGS="-sS $PARAMLINE -X POST \"https://pushall.ru/api.php?type=multicast\""
 	
 	if [ "$CA_BUNDLE" ]; then
 		CURLARGS="$CURLARGS --cacert \"$CA_BUNDLE\""
@@ -316,11 +400,11 @@ _self_api_queue () {
 	if [ "$EXTRA" = "top" ]; then
 		# TODO: Make checks against running out of space
 		mv $XDG_DATA_HOME/$CONF_SCRIPT_DIR/queue.txt $XDG_DATA_HOME/$CONF_SCRIPT_DIR/queue.old
-		_print "$UUID/::/self/::/$PUSHALL_ID/::/$PUSHALL_KEY/::/$TITLE/::/$TEXT/::/$ICON/::/$URL/::/$HIDDEN/::/$ENCODE/::/$PRIORITY/::/$TTL/::/$CA_BUNDLE" > "$XDG_DATA_HOME/$CONF_SCRIPT_DIR/queue.txt"
+		_print "$UUID/::/self/::/$PUSHALL_ID/::/$PUSHALL_KEY/::/$TITLE/::/$TEXT/::/$ICON/::/$URL/::/$HIDDEN/::/$ENCODE/::/$PRIORITY/::/$TTL/:://:://::/$CA_BUNDLE" > "$XDG_DATA_HOME/$CONF_SCRIPT_DIR/queue.txt"
 		cat $XDG_DATA_HOME/$CONF_SCRIPT_DIR/queue.old >> $XDG_DATA_HOME/$CONF_SCRIPT_DIR/queue.txt
 		rm $XDG_DATA_HOME/$CONF_SCRIPT_DIR/queue.old
 	else
-		_print "$UUID/::/self/::/$PUSHALL_ID/::/$PUSHALL_KEY/::/$TITLE/::/$TEXT/::/$ICON/::/$URL/::/$HIDDEN/::/$ENCODE/::/$PRIORITY/::/$TTL/::/$CA_BUNDLE" >> "$XDG_DATA_HOME/$CONF_SCRIPT_DIR/queue.txt"
+		_print "$UUID/::/self/::/$PUSHALL_ID/::/$PUSHALL_KEY/::/$TITLE/::/$TEXT/::/$ICON/::/$URL/::/$HIDDEN/::/$ENCODE/::/$PRIORITY/::/$TTL/:://:://::/$CA_BUNDLE" >> "$XDG_DATA_HOME/$CONF_SCRIPT_DIR/queue.txt"
 	fi
 
 	_lock_remove "queue"
@@ -348,11 +432,43 @@ _broadcast_api_queue () {
 	if [ "$EXTRA" = "top" ]; then
 		# TODO: Make checks against running out of space
 		mv $XDG_DATA_HOME/$CONF_SCRIPT_DIR/queue.txt $XDG_DATA_HOME/$CONF_SCRIPT_DIR/queue.old
-		_print "$UUID/::/broadcast/::/$PUSHALL_ID/::/$PUSHALL_KEY/::/$TITLE/::/$TEXT/::/$ICON/::/$URL/::/$HIDDEN/::/$ENCODE/::/$PRIORITY/::/$TTL/::/$CA_BUNDLE" > "$XDG_DATA_HOME/$CONF_SCRIPT_DIR/queue.txt"
+		_print "$UUID/::/broadcast/::/$PUSHALL_ID/::/$PUSHALL_KEY/::/$TITLE/::/$TEXT/::/$ICON/::/$URL/::/$HIDDEN/::/$ENCODE/::/$PRIORITY/::/$TTL/:://::/$FILTER/::/$CA_BUNDLE" > "$XDG_DATA_HOME/$CONF_SCRIPT_DIR/queue.txt"
 		cat $XDG_DATA_HOME/$CONF_SCRIPT_DIR/queue.old >> $XDG_DATA_HOME/$CONF_SCRIPT_DIR/queue.txt
 		rm $XDG_DATA_HOME/$CONF_SCRIPT_DIR/queue.old
 	else
-		_print "$UUID/::/broadcast/::/$PUSHALL_ID/::/$PUSHALL_KEY/::/$TITLE/::/$TEXT/::/$ICON/::/$URL/::/$HIDDEN/::/$ENCODE/::/$PRIORITY/::/$TTL/::/$CA_BUNDLE" >> "$XDG_DATA_HOME/$CONF_SCRIPT_DIR/queue.txt"
+		_print "$UUID/::/broadcast/::/$PUSHALL_ID/::/$PUSHALL_KEY/::/$TITLE/::/$TEXT/::/$ICON/::/$URL/::/$HIDDEN/::/$ENCODE/::/$PRIORITY/::/$TTL/:://::/$FILTER/::/$CA_BUNDLE" >> "$XDG_DATA_HOME/$CONF_SCRIPT_DIR/queue.txt"
+	fi
+
+	_lock_remove "queue"
+
+	_print "$UUID"
+
+	return 0;
+	
+}
+
+_multicast_api_queue () {
+
+	case "$EXTRA" in
+
+		[Tt][Oo][Pp])
+			EXTRA="top"
+		;;
+
+	esac
+
+	_lock_set "queue"
+
+	UUID=$(cat /proc/sys/kernel/random/uuid)
+
+	if [ "$EXTRA" = "top" ]; then
+		# TODO: Make checks against running out of space
+		mv $XDG_DATA_HOME/$CONF_SCRIPT_DIR/queue.txt $XDG_DATA_HOME/$CONF_SCRIPT_DIR/queue.old
+		_print "$UUID/::/multicast/::/$PUSHALL_ID/::/$PUSHALL_KEY/::/$TITLE/::/$TEXT/::/$ICON/::/$URL/::/$HIDDEN/::/$ENCODE/::/$PRIORITY/::/$TTL/::/$UIDS/::/$FILTER/::/$CA_BUNDLE" > "$XDG_DATA_HOME/$CONF_SCRIPT_DIR/queue.txt"
+		cat $XDG_DATA_HOME/$CONF_SCRIPT_DIR/queue.old >> $XDG_DATA_HOME/$CONF_SCRIPT_DIR/queue.txt
+		rm $XDG_DATA_HOME/$CONF_SCRIPT_DIR/queue.old
+	else
+		_print "$UUID/::/multicast/::/$PUSHALL_ID/::/$PUSHALL_KEY/::/$TITLE/::/$TEXT/::/$ICON/::/$URL/::/$HIDDEN/::/$ENCODE/::/$PRIORITY/::/$TTL/::/$UIDS/::/$FILTER/::/$CA_BUNDLE" >> "$XDG_DATA_HOME/$CONF_SCRIPT_DIR/queue.txt"
 	fi
 
 	_lock_remove "queue"
@@ -396,7 +512,7 @@ _queue_run() {
 		[ "$FULL_LINE" ] && FULL_LINE="$FULL_LINE\n"
 		FULL_LINE="$FULL_LINE$_line"
 
-		if [ $(echo "$FULL_LINE" | awk -F"/::/" '{print NF; exit}') -lt 13 ]; then
+		if [ $(echo "$FULL_LINE" | awk -F"/::/" '{print NF; exit}') -lt 15 ]; then
 			sed -i 1d "$XDG_DATA_HOME/$CONF_SCRIPT_DIR/queue.txt"
 			READING_LINE=1
 			continue
@@ -416,7 +532,9 @@ _queue_run() {
 		ENCODE=$(echo "$FULL_LINE" | awk -F"/::/" '{print $10}')
 		PRIORITY=$(echo "$FULL_LINE" | awk -F"/::/" '{print $11}')
 		TTL=$(echo "$FULL_LINE" | awk -F"/::/" '{print $12}')
-		CA_BUNDLE=$(echo "$FULL_LINE" | awk -F"/::/" '{print $13}')
+		UIDS=$(echo "$FULL_LINE" | awk -F"/::/" '{print $13}')
+		FILTER=$(echo "$FULL_LINE" | awk -F"/::/" '{print $14}')
+		CA_BUNDLE=$(echo "$FULL_LINE" | awk -F"/::/" '{print $15}')
 		case "$_api" in
 			[Ss][Ee][Ll][Ff])
 				while true; do
@@ -435,6 +553,15 @@ _queue_run() {
 					sleep 1;
 				done
 				_broadcast_api_check && _broadcast_api_call && BROADCAST_LAST=$(date +%s)
+			;;
+			[Mm][Uu][Ll][Tt][Ii][Cc][Aa][Ss][Tt])
+				while true; do
+					if [ ! "$MULTICAST_LAST" ] || [ $(($(date +%s) - $MULTICAST_LAST)) -gt 3 ]; then
+						break
+					fi
+					sleep 1;
+				done
+				_multicast_api_check && _multicast_api_call && MULTICAST_LAST=$(date +%s)
 			;;
 			*)
 				_print_err "Unknown API: \"$PUSHALL_API\""
@@ -478,7 +605,7 @@ _queue_delete() {
 		[ "$FULL_LINE" ] && FULL_LINE="$FULL_LINE\n"
 		FULL_LINE="$FULL_LINE$_line"
 
-		if [ $(echo "$FULL_LINE" | awk -F"/::/" '{print NF; exit}') -lt 13 ]; then
+		if [ $(echo "$FULL_LINE" | awk -F"/::/" '{print NF; exit}') -lt 15 ]; then
 			sed -i 1d "$XDG_DATA_HOME/$CONF_SCRIPT_DIR/queue.txt"
 			_lock_remove "queue"
 			continue
@@ -551,12 +678,48 @@ _broadcast_api_check() {
 	fi
 	
 	if [ ! "$PUSHALL_ID" ]; then
-		_print_err "Pushall ID (-I) is required for broadcast API call"
+		_print_err "Channel ID (-I) is required for broadcast API call"
 		return 1;
 	fi
 	
 	if [ ! "$PUSHALL_KEY" ]; then
-		_print_err "Pushall key (-K) is required for broadcast API call"
+		_print_err "Channel key (-K) is required for broadcast API call"
+		return 1;
+	fi
+	
+	return 0;
+	
+}
+
+_multicast_api_check() {
+
+	if [ ! "$TITLE" ]; then
+		_print_err "Title (-t) is required for multicast API call"
+		return 1;
+	fi
+	
+	if [ ! "$TEXT" ]; then
+		_print_err "Text (-T) is required for multicast API call"
+		return 1;
+	fi
+	
+	if [ ! "$PUSHALL_ID" ]; then
+		_print_err "Channel ID (-I) is required for multicast API call"
+		return 1;
+	fi
+	
+	if [ ! "$PUSHALL_KEY" ]; then
+		_print_err "Channel key (-K) is required for multicast API call"
+		return 1;
+	fi
+
+	if [ ! "$UIDS" ]; then
+		_print_err "UIDs (-U) are required for multicast API call"
+		return 1;
+	fi
+
+	if ! echo "$UIDS" | grep '^\[\([0-9][0-9]*,\)*[0-9][0-9]*\]$\|^\([0-9][0-9]*,\)*[0-9][0-9]*$' >/dev/null 2>&1; then
+		_print_err "UIDs must be either in \"[1,2,3]\" or \"1,2,3\" format for multicast API call"
 		return 1;
 	fi
 	
@@ -603,6 +766,9 @@ case "$COMMAND" in
 			[Bb][Rr][Oo][Aa][Dd][Cc][Aa][Ss][Tt])
 				_broadcast_api_check && _broadcast_api_call
 			;;
+			[Mm][Uu][Ll][Tt][Ii][Cc][Aa][Ss][Tt])
+				_multicast_api_check && _multicast_api_call
+			;;
 			*)
 				_print_err "Unknown API: \"$PUSHALL_API\""
 				exit 1;
@@ -614,8 +780,11 @@ case "$COMMAND" in
 			[Ss][Ee][Ll][Ff])
 				_self_api_check && _self_api_queue
 			;;
-				[Bb][Rr][Oo][Aa][Dd][Cc][Aa][Ss][Tt])
+			[Bb][Rr][Oo][Aa][Dd][Cc][Aa][Ss][Tt])
 				_broadcast_api_check && _broadcast_api_queue
+			;;
+			[Mm][Uu][Ll][Tt][Ii][Cc][Aa][Ss][Tt])
+				_multicast_api_check && _multicast_api_queue
 			;;
 			*)
 				_print_err "Unknown API: \"$PUSHALL_API\""
