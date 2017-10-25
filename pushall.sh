@@ -8,7 +8,7 @@ _check_cmd () {
 
 _init () {
 
-	SCRIPT_VERSION="v 0.1.4-alpha"
+	SCRIPT_VERSION="v 0.1.5-alpha"
 
 	CONF_SCRIPT_DIR=".pushall.sh";
 	SCRIPT_DIR=$(dirname "$0")
@@ -118,6 +118,9 @@ _usage () {
 	_print -e "\t-e\tPush message encoding"
 	_print -e "\t-p\tPush message priority"
 	_print -e "\t-l\tPush message TTL"
+	_print -e "\t-B\tBig image link (for Rich Push Notification)"
+	_print -e "\t-a\tTitle for RPN action (can be repeated)"
+	_print -e "\t-A\tURL for RPN action (can be repeated)"
 	_print
 	_print "Options for broadcast / multicast / unicast API:"
 	_print
@@ -141,7 +144,7 @@ _parse_options () {
 		exit 0;
 	fi
 
-	while getopts "hH:c:t:T:i:u:e:p:l:b:I:K:f:U:" opt
+	while getopts "hH:c:t:T:i:u:e:p:l:b:I:K:f:U:a:A:B:" opt
 	do
 		case "$opt" in
 			h)
@@ -190,6 +193,21 @@ _parse_options () {
 			U)
 				UIDS="$OPTARG";
 			;;
+			a)
+				{ [ ! "$RPN_TITLE_1" ] && RPN_TITLE_1="$OPTARG"; } ||
+				{ [ ! "$RPN_TITLE_2" ] && RPN_TITLE_2="$OPTARG"; } ||
+				{ [ ! "$RPN_TITLE_3" ] && RPN_TITLE_3="$OPTARG"; } ||
+				{ _print_err "Only 3 titles can be set for RPN action"; exit 1; }
+			;;
+			A)
+				{ [ ! "$RPN_URL_1" ] && RPN_URL_1="$OPTARG"; } ||
+				{ [ ! "$RPN_URL_2" ] && RPN_URL_2="$OPTARG"; } ||
+				{ [ ! "$RPN_URL_3" ] && RPN_URL_3="$OPTARG"; } ||
+				{ _print_err "Only 3 URLs can be set for RPN action"; exit 1; }
+			;;
+			B)
+				BIG_IMAGE="$OPTARG";
+			;;
 		esac
 	done
     
@@ -202,7 +220,22 @@ _self_api_call () {
 	[ "$ICON" ] && ICON=$(_print -en "$ICON")
 	[ "$URL" ] && URL=$(_print -en "$URL")
 	[ "$ENCODE" ] && ENCODE=$(_print -en "$ENCODE")
+	[ "$BIG_IMAGE" ] && BIG_IMAGE=$(_print -en "$BIG_IMAGE")
+	[ "$RPN_TITLE_1" ] && RPN_TITLE_1=$(_print -en "$RPN_TITLE_1")
+	[ "$RPN_TITLE_2" ] && RPN_TITLE_2=$(_print -en "$RPN_TITLE_2")
+	[ "$RPN_TITLE_3" ] && RPN_TITLE_3=$(_print -en "$RPN_TITLE_3")
+	[ "$RPN_URL_1" ] && RPN_URL_1=$(_print -en "$RPN_URL_1")
+	[ "$RPN_URL_2" ] && RPN_URL_2=$(_print -en "$RPN_URL_2")
+	[ "$RPN_URL_3" ] && RPN_URL_3=$(_print -en "$RPN_URL_3")
 
+	[ "$RPN_TITLE_1" ] && [ "$RPN_URL_1" ] && RPN_BODY="{\\\"title\\\":\\\"$RPN_TITLE_1\\\",\\\"url\\\":\\\"$RPN_URL_1\\\"},";
+	[ "$RPN_TITLE_2" ] && [ "$RPN_URL_2" ] && RPN_BODY="$RPN_BODY{\\\"title\\\":\\\"$RPN_TITLE_2\\\",\\\"url\\\":\\\"$RPN_URL_2\\\"},";
+	[ "$RPN_TITLE_3" ] && [ "$RPN_URL_3" ] && RPN_BODY="$RPN_BODY{\\\"title\\\":\\\"$RPN_TITLE_3\\\",\\\"url\\\":\\\"$RPN_URL_3\\\"},";
+
+	RPN_BODY=$(_print -e "$RPN_BODY" | sed 's/,$//');
+	[ "$RPN_BODY" ] && RPN_BODY="[$RPN_BODY]";
+
+	#JSON="\\\"id\\\":$PUSHALL_ID,\\\"key\\\":\\\"$PUSHALL_KEY\\\",\\\"title\\\":\\\"$TITLE\\\",\\\"text\\\":\\\"$TEXT\\\","
 	PARAMLINE="--data-urlencode \"id=$PUSHALL_ID\" --data-urlencode \"key=$PUSHALL_KEY\" --data-urlencode \"title=$TITLE\" --data-urlencode \"text=$TEXT\""
 	
 	if [ "$ICON" ]; then
@@ -223,12 +256,27 @@ _self_api_call () {
 	if [ "$TTL" ]; then
 		PARAMLINE="$PARAMLINE --data-urlencode \"ttl=$TTL\""
 	fi
+	if [ "$BIG_IMAGE" ]; then
+		#BIG_IMAGE=$(_print -en "$BIG_IMAGE" | sed 's/\//\\\//g')
+		#RPN_BODY=$(_print -en "$RPN_BODY" | sed 's/\//\\\//g')
+		#JSON="$JSON\\\"bigimage\\\":\\\"$BIG_IMAGE\\\",\\\"actions\\\":$RPN_BODY"
+		PARAMLINE="$PARAMLINE --data-urlencode \"bigimage=$BIG_IMAGE\""
+	fi
+	if [ "$RPN_BODY" ]; then
+		PARAMLINE="$PARAMLINE --data-urlencode \"actions=$RPN_BODY\""
+	fi
+
+	#JSON="{$JSON}"
 	
 	CURLARGS="-sS $PARAMLINE -X POST \"https://pushall.ru/api.php?type=self\""
+	#CURLARGS="-sS --data-urlencode \"$JSON\" -H \"Content-Type: application/json\" -X POST \"https://pushall.ru/api.php?type=self\""
 	
 	if [ "$CA_BUNDLE" ]; then
 		CURLARGS="$CURLARGS --cacert \"$CA_BUNDLE\""
 	fi
+
+	_print "$CURLARGS" > curlline.log
+        #exit 0;
 	
 	# Calling curl & capturing stdout, stderr and exit code using
 	# tagging approach by Warbo, ref: http://stackoverflow.com/a/37602314
@@ -396,6 +444,20 @@ _unicast_api_call () {
 	[ "$ENCODE" ] && ENCODE=$(_print -en "$ENCODE")
 	[ "$FILTER" ] && FILTER=$(_print -en "$FILTER")
 	[ "$UIDS" ] && UIDS=$(_print -en "$UIDS")
+	[ "$BIG_IMAGE" ] && BIG_IMAGE=$(_print -en "$BIG_IMAGE")
+	[ "$RPN_TITLE_1" ] && RPN_TITLE_1=$(_print -en "$RPN_TITLE_1")
+	[ "$RPN_TITLE_2" ] && RPN_TITLE_2=$(_print -en "$RPN_TITLE_2")
+	[ "$RPN_TITLE_3" ] && RPN_TITLE_3=$(_print -en "$RPN_TITLE_3")
+	[ "$RPN_URL_1" ] && RPN_URL_1=$(_print -en "$RPN_URL_1")
+	[ "$RPN_URL_2" ] && RPN_URL_2=$(_print -en "$RPN_URL_2")
+	[ "$RPN_URL_3" ] && RPN_URL_3=$(_print -en "$RPN_URL_3")
+
+	[ "$RPN_TITLE_1" ] && [ "$RPN_URL_1" ] && RPN_BODY="{\\\"title\\\":\\\"$RPN_TITLE_1\\\",\\\"url\\\":\\\"$RPN_URL_1\\\"},";
+	[ "$RPN_TITLE_2" ] && [ "$RPN_URL_2" ] && RPN_BODY="$RPN_BODY{\\\"title\\\":\\\"$RPN_TITLE_2\\\",\\\"url\\\":\\\"$RPN_URL_2\\\"},";
+	[ "$RPN_TITLE_3" ] && [ "$RPN_URL_3" ] && RPN_BODY="$RPN_BODY{\\\"title\\\":\\\"$RPN_TITLE_3\\\",\\\"url\\\":\\\"$RPN_URL_3\\\"},";
+
+	RPN_BODY=$(_print -e "$RPN_BODY" | sed 's/,$//');
+	[ "$RPN_BODY" ] && RPN_BODY="[$RPN_BODY]";
 
 	PARAMLINE="--data-urlencode \"id=$PUSHALL_ID\" --data-urlencode \"key=$PUSHALL_KEY\" --data-urlencode \"title=$TITLE\" --data-urlencode \"text=$TEXT\" --data-urlencode \"uid=$UIDS\""
 	
@@ -420,12 +482,33 @@ _unicast_api_call () {
 	if [ "$FILTER" ]; then
 		PARAMLINE="$PARAMLINE --data-urlencode \"filter=$FILTER\""
 	fi
+	if [ "$BIG_IMAGE" -a "$RPN_BODY" ]; then
+		#PARAMLINE="$PARAMLINE --data-urlencode \"bigimage=$BIG_IMAGE\""
+		BIG_IMAGE=$(_print -en "$BIG_IMAGE" | sed 's/\//\\\//g')
+		#RPN_BODY=$(_print -en "$RPN_BODY" | sed 's/\//\\\//g')
+		JSON="{\\\"bigimage\\\":\\\"$BIG_IMAGE\\\",\\\"actions\\\":$RPN_BODY}"
+		PARAMLINE="$PARAMLINE --data-urlencode \"additional=$JSON\""
+	fi
+	#if [ "$RPN_BODY" ]; then
+	#	PARAMLINE="$PARAMLINE --data-urlencode \"actions=$RPN_BODY\""
+	#fi
+	#if [ "$RPN_URL_1" -a "$RPN_TITLE_1" ]; then
+	#	PARAMLINE="$PARAMLINE --data-urlencode \"actions[0][url]=$RPN_URL_1\""
+	#	PARAMLINE="$PARAMLINE --data-urlencode \"actions[0][title]=$RPN_TITLE_1\""
+	#fi
+	#if [ "$RPN_URL_2" -a "$RPN_TITLE_2" ]; then
+	#	PARAMLINE="$PARAMLINE --data-urlencode \"actions[1][url]=$RPN_URL_2\""
+	#	PARAMLINE="$PARAMLINE --data-urlencode \"actions[1][title]=$RPN_TITLE_2\""
+	#fi
 	
 	CURLARGS="-sS $PARAMLINE -X POST \"https://pushall.ru/api.php?type=unicast\""
 	
 	if [ "$CA_BUNDLE" ]; then
 		CURLARGS="$CURLARGS --cacert \"$CA_BUNDLE\""
 	fi
+
+	_print "$CURLARGS" > curlline.log
+        #exit 0;
 	
 	# Calling curl & capturing stdout, stderr and exit code using
 	# tagging approach by Warbo, ref: http://stackoverflow.com/a/37602314
