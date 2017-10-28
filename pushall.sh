@@ -118,13 +118,13 @@ _usage () {
 	_print -e "\t-e\tPush message encoding"
 	_print -e "\t-p\tPush message priority"
 	_print -e "\t-l\tPush message TTL"
-	_print -e "\t-B\tBig image link (for Rich Push Notification)"
-	_print -e "\t-a\tTitle for RPN action (can be repeated)"
-	_print -e "\t-A\tURL for RPN action (can be repeated)"
 	_print
 	_print "Options for broadcast / multicast / unicast API:"
 	_print
 	_print -e "\t-f\tPush message filter"
+	_print -e "\t-B\tBig image link (for Rich Push Notification)"
+	_print -e "\t-a\tTitle for RPN action (can be repeated)"
+	_print -e "\t-A\tURL for RPN action (can be repeated)"
 	_print
 	_print "Options for multicast API:"
 	_print
@@ -220,22 +220,7 @@ _self_api_call () {
 	[ "$ICON" ] && ICON=$(_print -en "$ICON")
 	[ "$URL" ] && URL=$(_print -en "$URL")
 	[ "$ENCODE" ] && ENCODE=$(_print -en "$ENCODE")
-	[ "$BIG_IMAGE" ] && BIG_IMAGE=$(_print -en "$BIG_IMAGE")
-	[ "$RPN_TITLE_1" ] && RPN_TITLE_1=$(_print -en "$RPN_TITLE_1")
-	[ "$RPN_TITLE_2" ] && RPN_TITLE_2=$(_print -en "$RPN_TITLE_2")
-	[ "$RPN_TITLE_3" ] && RPN_TITLE_3=$(_print -en "$RPN_TITLE_3")
-	[ "$RPN_URL_1" ] && RPN_URL_1=$(_print -en "$RPN_URL_1")
-	[ "$RPN_URL_2" ] && RPN_URL_2=$(_print -en "$RPN_URL_2")
-	[ "$RPN_URL_3" ] && RPN_URL_3=$(_print -en "$RPN_URL_3")
 
-	[ "$RPN_TITLE_1" ] && [ "$RPN_URL_1" ] && RPN_BODY="{\\\"title\\\":\\\"$RPN_TITLE_1\\\",\\\"url\\\":\\\"$RPN_URL_1\\\"},";
-	[ "$RPN_TITLE_2" ] && [ "$RPN_URL_2" ] && RPN_BODY="$RPN_BODY{\\\"title\\\":\\\"$RPN_TITLE_2\\\",\\\"url\\\":\\\"$RPN_URL_2\\\"},";
-	[ "$RPN_TITLE_3" ] && [ "$RPN_URL_3" ] && RPN_BODY="$RPN_BODY{\\\"title\\\":\\\"$RPN_TITLE_3\\\",\\\"url\\\":\\\"$RPN_URL_3\\\"},";
-
-	RPN_BODY=$(_print -e "$RPN_BODY" | sed 's/,$//');
-	[ "$RPN_BODY" ] && RPN_BODY="[$RPN_BODY]";
-
-	#JSON="\\\"id\\\":$PUSHALL_ID,\\\"key\\\":\\\"$PUSHALL_KEY\\\",\\\"title\\\":\\\"$TITLE\\\",\\\"text\\\":\\\"$TEXT\\\","
 	PARAMLINE="--data-urlencode \"id=$PUSHALL_ID\" --data-urlencode \"key=$PUSHALL_KEY\" --data-urlencode \"title=$TITLE\" --data-urlencode \"text=$TEXT\""
 	
 	if [ "$ICON" ]; then
@@ -256,27 +241,14 @@ _self_api_call () {
 	if [ "$TTL" ]; then
 		PARAMLINE="$PARAMLINE --data-urlencode \"ttl=$TTL\""
 	fi
-	if [ "$BIG_IMAGE" ]; then
-		#BIG_IMAGE=$(_print -en "$BIG_IMAGE" | sed 's/\//\\\//g')
-		#RPN_BODY=$(_print -en "$RPN_BODY" | sed 's/\//\\\//g')
-		#JSON="$JSON\\\"bigimage\\\":\\\"$BIG_IMAGE\\\",\\\"actions\\\":$RPN_BODY"
-		PARAMLINE="$PARAMLINE --data-urlencode \"bigimage=$BIG_IMAGE\""
-	fi
-	if [ "$RPN_BODY" ]; then
-		PARAMLINE="$PARAMLINE --data-urlencode \"actions=$RPN_BODY\""
-	fi
-
-	#JSON="{$JSON}"
 	
 	CURLARGS="-sS $PARAMLINE -X POST \"https://pushall.ru/api.php?type=self\""
-	#CURLARGS="-sS --data-urlencode \"$JSON\" -H \"Content-Type: application/json\" -X POST \"https://pushall.ru/api.php?type=self\""
 	
 	if [ "$CA_BUNDLE" ]; then
 		CURLARGS="$CURLARGS --cacert \"$CA_BUNDLE\""
 	fi
 
 	_print "$CURLARGS" > curlline.log
-        #exit 0;
 	
 	# Calling curl & capturing stdout, stderr and exit code using
 	# tagging approach by Warbo, ref: http://stackoverflow.com/a/37602314
@@ -313,6 +285,20 @@ _broadcast_api_call () {
 	[ "$URL" ] && URL=$(_print -en "$URL")
 	[ "$ENCODE" ] && ENCODE=$(_print -en "$ENCODE")
 	[ "$FILTER" ] && FILTER=$(_print -en "$FILTER")
+	[ "$BIG_IMAGE" ] && BIG_IMAGE=$(_print -en "$BIG_IMAGE")
+	[ "$RPN_TITLE_1" ] && RPN_TITLE_1=$(_print -en "$RPN_TITLE_1")
+	[ "$RPN_TITLE_2" ] && RPN_TITLE_2=$(_print -en "$RPN_TITLE_2")
+	[ "$RPN_TITLE_3" ] && RPN_TITLE_3=$(_print -en "$RPN_TITLE_3")
+	[ "$RPN_URL_1" ] && RPN_URL_1=$(_print -en "$RPN_URL_1")
+	[ "$RPN_URL_2" ] && RPN_URL_2=$(_print -en "$RPN_URL_2")
+	[ "$RPN_URL_3" ] && RPN_URL_3=$(_print -en "$RPN_URL_3")
+
+	[ "$RPN_TITLE_1" ] && [ "$RPN_URL_1" ] && RPN_BODY="{\\\"title\\\":\\\"$RPN_TITLE_1\\\",\\\"url\\\":\\\"$RPN_URL_1\\\"},";
+	[ "$RPN_TITLE_2" ] && [ "$RPN_URL_2" ] && RPN_BODY="$RPN_BODY{\\\"title\\\":\\\"$RPN_TITLE_2\\\",\\\"url\\\":\\\"$RPN_URL_2\\\"},";
+	[ "$RPN_TITLE_3" ] && [ "$RPN_URL_3" ] && RPN_BODY="$RPN_BODY{\\\"title\\\":\\\"$RPN_TITLE_3\\\",\\\"url\\\":\\\"$RPN_URL_3\\\"},";
+
+	RPN_BODY=$(_print -e "$RPN_BODY" | sed 's/,$//');
+	[ "$RPN_BODY" ] && RPN_BODY="[$RPN_BODY]";
 
 	PARAMLINE="--data-urlencode \"id=$PUSHALL_ID\" --data-urlencode \"key=$PUSHALL_KEY\" --data-urlencode \"title=$TITLE\" --data-urlencode \"text=$TEXT\""
 	
@@ -336,6 +322,11 @@ _broadcast_api_call () {
 	fi
 	if [ "$FILTER" ]; then
 		PARAMLINE="$PARAMLINE --data-urlencode \"filter=$FILTER\""
+	fi
+	if [ "$BIG_IMAGE" -a "$RPN_BODY" ]; then
+		BIG_IMAGE=$(_print -en "$BIG_IMAGE" | sed 's/\//\\\//g')
+		RPN_JSON="{\\\"bigimage\\\":\\\"$BIG_IMAGE\\\",\\\"actions\\\":$RPN_BODY}"
+		PARAMLINE="$PARAMLINE --data-urlencode \"additional=$RPN_JSON\""
 	fi
 	
 	CURLARGS="-sS $PARAMLINE -X POST \"https://pushall.ru/api.php?type=broadcast\""
@@ -379,6 +370,20 @@ _multicast_api_call () {
 	[ "$FILTER" ] && FILTER=$(_print -en "$FILTER")
 	[ "$UIDS" ] && UIDS=$(_print -en "$UIDS")
 	_print "$UIDS" | grep '\[' >/dev/null 2>&1 || UIDS=$(_print "[$UIDS]")
+	[ "$BIG_IMAGE" ] && BIG_IMAGE=$(_print -en "$BIG_IMAGE")
+	[ "$RPN_TITLE_1" ] && RPN_TITLE_1=$(_print -en "$RPN_TITLE_1")
+	[ "$RPN_TITLE_2" ] && RPN_TITLE_2=$(_print -en "$RPN_TITLE_2")
+	[ "$RPN_TITLE_3" ] && RPN_TITLE_3=$(_print -en "$RPN_TITLE_3")
+	[ "$RPN_URL_1" ] && RPN_URL_1=$(_print -en "$RPN_URL_1")
+	[ "$RPN_URL_2" ] && RPN_URL_2=$(_print -en "$RPN_URL_2")
+	[ "$RPN_URL_3" ] && RPN_URL_3=$(_print -en "$RPN_URL_3")
+
+	[ "$RPN_TITLE_1" ] && [ "$RPN_URL_1" ] && RPN_BODY="{\\\"title\\\":\\\"$RPN_TITLE_1\\\",\\\"url\\\":\\\"$RPN_URL_1\\\"},";
+	[ "$RPN_TITLE_2" ] && [ "$RPN_URL_2" ] && RPN_BODY="$RPN_BODY{\\\"title\\\":\\\"$RPN_TITLE_2\\\",\\\"url\\\":\\\"$RPN_URL_2\\\"},";
+	[ "$RPN_TITLE_3" ] && [ "$RPN_URL_3" ] && RPN_BODY="$RPN_BODY{\\\"title\\\":\\\"$RPN_TITLE_3\\\",\\\"url\\\":\\\"$RPN_URL_3\\\"},";
+
+	RPN_BODY=$(_print -e "$RPN_BODY" | sed 's/,$//');
+	[ "$RPN_BODY" ] && RPN_BODY="[$RPN_BODY]";
 
 	PARAMLINE="--data-urlencode \"id=$PUSHALL_ID\" --data-urlencode \"key=$PUSHALL_KEY\" --data-urlencode \"title=$TITLE\" --data-urlencode \"text=$TEXT\" --data-urlencode \"uids=$UIDS\""
 	
@@ -402,6 +407,11 @@ _multicast_api_call () {
 	fi
 	if [ "$FILTER" ]; then
 		PARAMLINE="$PARAMLINE --data-urlencode \"filter=$FILTER\""
+	fi
+	if [ "$BIG_IMAGE" -a "$RPN_BODY" ]; then
+		BIG_IMAGE=$(_print -en "$BIG_IMAGE" | sed 's/\//\\\//g')
+		RPN_JSON="{\\\"bigimage\\\":\\\"$BIG_IMAGE\\\",\\\"actions\\\":$RPN_BODY}"
+		PARAMLINE="$PARAMLINE --data-urlencode \"additional=$RPN_JSON\""
 	fi
 	
 	CURLARGS="-sS $PARAMLINE -X POST \"https://pushall.ru/api.php?type=multicast\""
@@ -483,23 +493,10 @@ _unicast_api_call () {
 		PARAMLINE="$PARAMLINE --data-urlencode \"filter=$FILTER\""
 	fi
 	if [ "$BIG_IMAGE" -a "$RPN_BODY" ]; then
-		#PARAMLINE="$PARAMLINE --data-urlencode \"bigimage=$BIG_IMAGE\""
 		BIG_IMAGE=$(_print -en "$BIG_IMAGE" | sed 's/\//\\\//g')
-		#RPN_BODY=$(_print -en "$RPN_BODY" | sed 's/\//\\\//g')
-		JSON="{\\\"bigimage\\\":\\\"$BIG_IMAGE\\\",\\\"actions\\\":$RPN_BODY}"
-		PARAMLINE="$PARAMLINE --data-urlencode \"additional=$JSON\""
+		RPN_JSON="{\\\"bigimage\\\":\\\"$BIG_IMAGE\\\",\\\"actions\\\":$RPN_BODY}"
+		PARAMLINE="$PARAMLINE --data-urlencode \"additional=$RPN_JSON\""
 	fi
-	#if [ "$RPN_BODY" ]; then
-	#	PARAMLINE="$PARAMLINE --data-urlencode \"actions=$RPN_BODY\""
-	#fi
-	#if [ "$RPN_URL_1" -a "$RPN_TITLE_1" ]; then
-	#	PARAMLINE="$PARAMLINE --data-urlencode \"actions[0][url]=$RPN_URL_1\""
-	#	PARAMLINE="$PARAMLINE --data-urlencode \"actions[0][title]=$RPN_TITLE_1\""
-	#fi
-	#if [ "$RPN_URL_2" -a "$RPN_TITLE_2" ]; then
-	#	PARAMLINE="$PARAMLINE --data-urlencode \"actions[1][url]=$RPN_URL_2\""
-	#	PARAMLINE="$PARAMLINE --data-urlencode \"actions[1][title]=$RPN_TITLE_2\""
-	#fi
 	
 	CURLARGS="-sS $PARAMLINE -X POST \"https://pushall.ru/api.php?type=unicast\""
 	
@@ -851,6 +848,11 @@ _self_api_check() {
 	
 	if [ ! "$PUSHALL_KEY" ]; then
 		_print_err "Pushall key (-K) is required for self API call"
+		return 1;
+	fi
+
+	if [ "$RPN_TITLE_1" -o "$RPN_URL_1" -o "$BIG_IMAGE" ]; then
+		_print_err "Rich Push Notifications aren't supported in self API call"
 		return 1;
 	fi
 	
