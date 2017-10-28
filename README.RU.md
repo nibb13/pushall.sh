@@ -2,7 +2,7 @@
 
 Реализация [API pushall.ru](https://pushall.ru/blog/api) на POSIX-совместимом Shell-script.
 
-v. 0.1.3-alpha  
+v. 0.1.4-alpha  
 [![Build Status](https://travis-ci.org/nibb13/pushall.sh.svg?branch=master)](https://travis-ci.org/nibb13/pushall.sh)
 
 ## Функциональность
@@ -10,6 +10,7 @@ v. 0.1.3-alpha
 * Self API
 * Broadcast API
 * Multicast API
+* Unicast API
 * Очередь отправки
 
 ## Требования
@@ -52,12 +53,19 @@ v. 0.1.3-alpha
 *(Вернёт уникальный ID сообщения в очереди)*
 
 **Отправка сообщений через Broadcast API**
-Замените в примерах выше `-c self` на `-c broadcast` и используйте ID / ключ от канала вместо пользовательского.
+
+Замените в примерах выше `-c self` на `-c broadcast` и используйте ID / ключ от канала вместо пользовательского.  
 *(Вернёт LID или сообщение об ошибке от API)*
 
 **Отправка сообщений через Multicast API**
-Так же, как и broadcast, только с `-c multicast`. Не забудьте указать UIDs (-U) в формате "[1,2,3]" или "1,2,3"
+
+Так же, как и broadcast, только с `-c multicast`. Не забудьте указать UIDs (-U) в формате "[1,2,3]" или "1,2,3"  
 *(Вернёт LID или сообщение об ошибке от API)*
+
+**Отправка сообщений через Unicast API**
+
+Так же, как и multicast, только с `-c unicast`. Параметр UID (-U) теперь просто одно целое число.  
+*(Вернёт количество устройств, получивших сообщение или сообщение об ошибке от API)*
 
 **Выполнение существующей очереди с соблюдением тайм-аутов API**
 
@@ -96,4 +104,4 @@ v. 0.1.3-alpha
 
 <nibble@list.ru>  
 
-Last update: 22.10.2017
+Last update: 23.10.2017

@@ -8,7 +8,7 @@ _check_cmd () {
 
 _init () {
 
-	SCRIPT_VERSION="v 0.1.3-alpha"
+	SCRIPT_VERSION="v 0.1.4-alpha"
 
 	CONF_SCRIPT_DIR=".pushall.sh";
 	SCRIPT_DIR=$(dirname "$0")
@@ -103,10 +103,10 @@ _usage () {
 	_print
 	_print -e "\t-b\tCA bundle path for curl"
 	_print -e "\t-c\tAPI call"
-	_print -e "\t\t( Can be \"self\", \"broadcast\" or \"multicast\" )"
+	_print -e "\t\t( Can be \"self\", \"broadcast\" , \"multicast\" or \"unicast\" )"
 	_print -e "\t-h\tThis usage help"
 	_print
-	_print "Options for self & broadcast API:"
+	_print "Options for self / broadcast / multicast / unicast APIs:"
 	_print
 	_print -e "\t-t\tPush message title (required)"
 	_print -e "\t-T\tPush message text (required)"
@@ -119,13 +119,17 @@ _usage () {
 	_print -e "\t-p\tPush message priority"
 	_print -e "\t-l\tPush message TTL"
 	_print
-	_print "Options for broadcast & multicast API:"
+	_print "Options for broadcast / multicast / unicast API:"
 	_print
 	_print -e "\t-f\tPush message filter"
 	_print
 	_print "Options for multicast API:"
 	_print
 	_print -e "\t-U\tUIDs (\"[1,2,3]\" or \"1,2,3\")"
+	_print
+	_print "Options for unicast API:"
+	_print
+	_print -e "\t-U\tUID (single number)"
 	_print
 
 }
@@ -383,6 +387,71 @@ _multicast_api_call () {
 	
 }
 
+_unicast_api_call () {
+
+	[ "$TITLE" ] && TITLE=$(_print -en "$TITLE")
+	[ "$TEXT" ] && TEXT=$(_print -en "$TEXT")
+	[ "$ICON" ] && ICON=$(_print -en "$ICON")
+	[ "$URL" ] && URL=$(_print -en "$URL")
+	[ "$ENCODE" ] && ENCODE=$(_print -en "$ENCODE")
+	[ "$FILTER" ] && FILTER=$(_print -en "$FILTER")
+	[ "$UIDS" ] && UIDS=$(_print -en "$UIDS")
+
+	PARAMLINE="--data-urlencode \"id=$PUSHALL_ID\" --data-urlencode \"key=$PUSHALL_KEY\" --data-urlencode \"title=$TITLE\" --data-urlencode \"text=$TEXT\" --data-urlencode \"uid=$UIDS\""
+	
+	if [ "$ICON" ]; then
+		PARAMLINE="$PARAMLINE --data-urlencode \"icon=$ICON\""
+	fi
+	if [ "$URL" ]; then
+		PARAMLINE="$PARAMLINE --data-urlencode \"url=$URL\""
+	fi
+	if [ "$HIDDEN" ]; then
+		PARAMLINE="$PARAMLINE --data-urlencode \"hidden=$HIDDEN\""
+	fi
+	if [ "$ENCODE" ]; then
+		PARAMLINE="$PARAMLINE --data-urlencode \"encode=$ENCODE\""
+	fi
+	if [ "$PRIORITY" ]; then
+		PARAMLINE="$PARAMLINE --data-urlencode \"priority=$PRIORITY\""
+	fi
+	if [ "$TTL" ]; then
+		PARAMLINE="$PARAMLINE --data-urlencode \"ttl=$TTL\""
+	fi
+	if [ "$FILTER" ]; then
+		PARAMLINE="$PARAMLINE --data-urlencode \"filter=$FILTER\""
+	fi
+	
+	CURLARGS="-sS $PARAMLINE -X POST \"https://pushall.ru/api.php?type=unicast\""
+	
+	if [ "$CA_BUNDLE" ]; then
+		CURLARGS="$CURLARGS --cacert \"$CA_BUNDLE\""
+	fi
+	
+	# Calling curl & capturing stdout, stderr and exit code using
+	# tagging approach by Warbo, ref: http://stackoverflow.com/a/37602314
+	CURLOUT=$({ { eval "curl $CURLARGS"; _print -e "EXITSTATUS:$?" >&2; } | sed -e 's/^/STDOUT:/g'; } 2>&1)
+	#_print "$CURLOUT"
+	CURLEXITSTATUS=$(_print "$CURLOUT" | grep "^EXITSTATUS:" | sed -e 's/^EXITSTATUS://g')
+	CURLSTDOUT=$(_print "$CURLOUT" | grep "^STDOUT:" | grep -v "^EXITSTATUS:" | sed -e 's/^STDOUT://g')
+	CURLSTDERR=$(_print "$CURLOUT" | grep -v "^STDOUT:\|^EXITSTATUS:")
+	
+	if [ $CURLEXITSTATUS -ne 0 ]; then
+		_print_err -e "Error in curl: $CURLSTDERR"
+		return 1;
+	else
+		CURLPARSED=$(_print "$CURLSTDOUT" | $SCRIPT_DIR/JSON.awk)
+		PUSHALL_ERROR=$(_print "$CURLPARSED" | grep "\[\"error\"\]" | sed 's/.*\t\(.*\)/\1/')
+		if [ "$PUSHALL_ERROR" ]; then
+			_print_err "API returned error: $PUSHALL_ERROR"
+			return 1;
+		fi
+		SUCCESS=$(_print "$CURLPARSED" | grep "\[\"success\"\]" | sed 's/.*\t\(.*\)/\1/')
+		_print "$SUCCESS"
+		return 0;
+	fi
+	
+}
+
 _self_api_queue () {
 
 	case "$EXTRA" in
@@ -479,6 +548,38 @@ _multicast_api_queue () {
 	
 }
 
+_unicast_api_queue () {
+
+	case "$EXTRA" in
+
+		[Tt][Oo][Pp])
+			EXTRA="top"
+		;;
+
+	esac
+
+	_lock_set "queue"
+
+	UUID=$(cat /proc/sys/kernel/random/uuid)
+
+	if [ "$EXTRA" = "top" ]; then
+		# TODO: Make checks against running out of space
+		mv $XDG_DATA_HOME/$CONF_SCRIPT_DIR/queue.txt $XDG_DATA_HOME/$CONF_SCRIPT_DIR/queue.old
+		_print "$UUID/::/unicast/::/$PUSHALL_ID/::/$PUSHALL_KEY/::/$TITLE/::/$TEXT/::/$ICON/::/$URL/::/$HIDDEN/::/$ENCODE/::/$PRIORITY/::/$TTL/::/$UIDS/::/$FILTER/::/$CA_BUNDLE" > "$XDG_DATA_HOME/$CONF_SCRIPT_DIR/queue.txt"
+		cat $XDG_DATA_HOME/$CONF_SCRIPT_DIR/queue.old >> $XDG_DATA_HOME/$CONF_SCRIPT_DIR/queue.txt
+		rm $XDG_DATA_HOME/$CONF_SCRIPT_DIR/queue.old
+	else
+		_print "$UUID/::/unicast/::/$PUSHALL_ID/::/$PUSHALL_KEY/::/$TITLE/::/$TEXT/::/$ICON/::/$URL/::/$HIDDEN/::/$ENCODE/::/$PRIORITY/::/$TTL/::/$UIDS/::/$FILTER/::/$CA_BUNDLE" >> "$XDG_DATA_HOME/$CONF_SCRIPT_DIR/queue.txt"
+	fi
+
+	_lock_remove "queue"
+
+	_print "$UUID"
+
+	return 0;
+	
+}
+
 _queue_run() {
 
 	[ ! -f "$XDG_DATA_HOME/$CONF_SCRIPT_DIR/queue.txt" ] && return 0;
@@ -562,6 +663,15 @@ _queue_run() {
 					sleep 1;
 				done
 				_multicast_api_check && _multicast_api_call && MULTICAST_LAST=$(date +%s)
+			;;
+			[Uu][Nn][Ii][Cc][Aa][Ss][Tt])
+				while true; do
+					if [ ! "$UNICAST_LAST" ] || [ $(($(date +%s) - $UNICAST_LAST)) -gt 3 ]; then
+						break
+					fi
+					sleep 1;
+				done
+				_unicast_api_check && _unicast_api_call && UNICAST_LAST=$(date +%s)
 			;;
 			*)
 				_print_err "Unknown API: \"$PUSHALL_API\""
@@ -727,6 +837,42 @@ _multicast_api_check() {
 	
 }
 
+_unicast_api_check() {
+
+	if [ ! "$TITLE" ]; then
+		_print_err "Title (-t) is required for unicast API call"
+		return 1;
+	fi
+	
+	if [ ! "$TEXT" ]; then
+		_print_err "Text (-T) is required for unicast API call"
+		return 1;
+	fi
+	
+	if [ ! "$PUSHALL_ID" ]; then
+		_print_err "Channel ID (-I) is required for unicast API call"
+		return 1;
+	fi
+	
+	if [ ! "$PUSHALL_KEY" ]; then
+		_print_err "Channel key (-K) is required for unicast API call"
+		return 1;
+	fi
+
+	if [ ! "$UIDS" ]; then
+		_print_err "UID (-U) is required for unicast API call"
+		return 1;
+	fi
+
+	if ! echo "$UIDS" | grep '^[0-9][0-9]*$' >/dev/null 2>&1; then
+		_print_err "UID must be numeric for unicast API call"
+		return 1;
+	fi
+	
+	return 0;
+	
+}
+
 _lock_set () {
 
 	LOCK_NAME="$1";
@@ -769,6 +915,9 @@ case "$COMMAND" in
 			[Mm][Uu][Ll][Tt][Ii][Cc][Aa][Ss][Tt])
 				_multicast_api_check && _multicast_api_call
 			;;
+			[Uu][Nn][Ii][Cc][Aa][Ss][Tt])
+				_unicast_api_check && _unicast_api_call
+			;;
 			*)
 				_print_err "Unknown API: \"$PUSHALL_API\""
 				exit 1;
@@ -785,6 +934,9 @@ case "$COMMAND" in
 			;;
 			[Mm][Uu][Ll][Tt][Ii][Cc][Aa][Ss][Tt])
 				_multicast_api_check && _multicast_api_queue
+			;;
+			[Uu][Nn][Ii][Cc][Aa][Ss][Tt])
+				_unicast_api_check && _unicast_api_queue
 			;;
 			*)
 				_print_err "Unknown API: \"$PUSHALL_API\""
