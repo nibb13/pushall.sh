@@ -86,7 +86,7 @@ _print_err () {
 
 _usage () {
 
-	_print "Usage: $0 -cIKtT [-beHilpuhfU] [COMMAND]"
+	_print "Usage: $0 -cIKtT [-beHilpuhfUBaA] [COMMAND]"
 	_print
 	_print "API calls to pushall.ru"
 	_print "$SCRIPT_VERSION"
@@ -123,8 +123,8 @@ _usage () {
 	_print
 	_print -e "\t-f\tPush message filter"
 	_print -e "\t-B\tBig image link (for Rich Push Notification)"
-	_print -e "\t-a\tTitle for RPN action (can be repeated)"
-	_print -e "\t-A\tURL for RPN action (can be repeated)"
+	_print -e "\t-a\tTitle for RPN action (can be repeated up to 3)"
+	_print -e "\t-A\tURL for RPN action (can be repeated up to 3)"
 	_print
 	_print "Options for multicast API:"
 	_print
