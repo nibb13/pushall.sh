@@ -1,3 +1,5 @@
+[EN](README.md) | *RU*
+
 # pushall.sh
 
 Реализация [API pushall.ru](https://pushall.ru/blog/api) на POSIX-совместимом Shell-script.

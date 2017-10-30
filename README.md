@@ -1,3 +1,5 @@
+*EN* | [RU](README.RU.md)
+
 # pushall.sh
 
 POSIX-shell implementation of [pushall.ru API](https://pushall.ru/blog/api).
