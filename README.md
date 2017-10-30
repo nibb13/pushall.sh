@@ -1,4 +1,4 @@
-*EN* | [RU](README.RU.md)
+**EN** | [RU](README.RU.md)
 
 # pushall.sh
 
@@ -106,4 +106,4 @@ Any mentions, suggestions, pull-requests, bug reports, usage reports etc. are we
 
 <nibble@list.ru>  
 
-Last update: 23.10.2017
+Last update: 2017.10.30
