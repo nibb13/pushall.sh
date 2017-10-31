@@ -47,6 +47,8 @@ _init () {
 		_print_err "No curl is found!"
 		exit 1;
 	fi
+
+	JSON_AWK_LINE="awk 'BEGIN{RS=\"n/o/m/a/t/c/h\";ORS=\"\";}{gsub(/[\\\\\\/]/, \"\\\\\\\\\\\\\\\\&\"); gsub(/[\"]/, \"\\\\\\\\\\\\\\\\\\\\\\\\\\&\"); gsub(/\\r/,\"\\\\\\\\r\"); gsub(/\\n/,\"\\\\\\\\n\"); gsub(/\\f/,\"\\\\\\\\f\"); gsub(/\\b/,\"\\\\\\\\b\"); gsub(/\\t/,\"\\\\\\\\t\"); print;}'"
     
 }
 
@@ -285,19 +287,19 @@ _broadcast_api_call () {
 	[ "$URL" ] && URL=$(_print -en "$URL")
 	[ "$ENCODE" ] && ENCODE=$(_print -en "$ENCODE")
 	[ "$FILTER" ] && FILTER=$(_print -en "$FILTER")
-	[ "$BIG_IMAGE" ] && BIG_IMAGE=$(_print -en "$BIG_IMAGE")
-	[ "$RPN_TITLE_1" ] && RPN_TITLE_1=$(_print -en "$RPN_TITLE_1")
-	[ "$RPN_TITLE_2" ] && RPN_TITLE_2=$(_print -en "$RPN_TITLE_2")
-	[ "$RPN_TITLE_3" ] && RPN_TITLE_3=$(_print -en "$RPN_TITLE_3")
-	[ "$RPN_URL_1" ] && RPN_URL_1=$(_print -en "$RPN_URL_1")
-	[ "$RPN_URL_2" ] && RPN_URL_2=$(_print -en "$RPN_URL_2")
-	[ "$RPN_URL_3" ] && RPN_URL_3=$(_print -en "$RPN_URL_3")
+	[ "$BIG_IMAGE" ] && BIG_IMAGE=$(_print -en "$BIG_IMAGE" | eval "$JSON_AWK_LINE")
+	[ "$RPN_TITLE_1" ] && RPN_TITLE_1=$(_print -en "$RPN_TITLE_1" | eval "$JSON_AWK_LINE")
+	[ "$RPN_TITLE_2" ] && RPN_TITLE_2=$(_print -en "$RPN_TITLE_2" | eval "$JSON_AWK_LINE")
+	[ "$RPN_TITLE_3" ] && RPN_TITLE_3=$(_print -en "$RPN_TITLE_3" | eval "$JSON_AWK_LINE")
+	[ "$RPN_URL_1" ] && RPN_URL_1=$(_print -en "$RPN_URL_1" | eval "$JSON_AWK_LINE")
+	[ "$RPN_URL_2" ] && RPN_URL_2=$(_print -en "$RPN_URL_2" | eval "$JSON_AWK_LINE")
+	[ "$RPN_URL_3" ] && RPN_URL_3=$(_print -en "$RPN_URL_3" | eval "$JSON_AWK_LINE")
 
 	[ "$RPN_TITLE_1" ] && [ "$RPN_URL_1" ] && RPN_BODY="{\\\"title\\\":\\\"$RPN_TITLE_1\\\",\\\"url\\\":\\\"$RPN_URL_1\\\"},";
 	[ "$RPN_TITLE_2" ] && [ "$RPN_URL_2" ] && RPN_BODY="$RPN_BODY{\\\"title\\\":\\\"$RPN_TITLE_2\\\",\\\"url\\\":\\\"$RPN_URL_2\\\"},";
 	[ "$RPN_TITLE_3" ] && [ "$RPN_URL_3" ] && RPN_BODY="$RPN_BODY{\\\"title\\\":\\\"$RPN_TITLE_3\\\",\\\"url\\\":\\\"$RPN_URL_3\\\"},";
 
-	RPN_BODY=$(_print -e "$RPN_BODY" | sed 's/,$//');
+	RPN_BODY=$(_print "$RPN_BODY" | sed 's/,$//');
 	[ "$RPN_BODY" ] && RPN_BODY="[$RPN_BODY]";
 
 	PARAMLINE="--data-urlencode \"id=$PUSHALL_ID\" --data-urlencode \"key=$PUSHALL_KEY\" --data-urlencode \"title=$TITLE\" --data-urlencode \"text=$TEXT\""
@@ -324,7 +326,6 @@ _broadcast_api_call () {
 		PARAMLINE="$PARAMLINE --data-urlencode \"filter=$FILTER\""
 	fi
 	if [ "$BIG_IMAGE" -a "$RPN_BODY" ]; then
-		BIG_IMAGE=$(_print -en "$BIG_IMAGE" | sed 's/\//\\\//g')
 		RPN_JSON="{\\\"bigimage\\\":\\\"$BIG_IMAGE\\\",\\\"actions\\\":$RPN_BODY}"
 		PARAMLINE="$PARAMLINE --data-urlencode \"additional=$RPN_JSON\""
 	fi
@@ -370,19 +371,19 @@ _multicast_api_call () {
 	[ "$FILTER" ] && FILTER=$(_print -en "$FILTER")
 	[ "$UIDS" ] && UIDS=$(_print -en "$UIDS")
 	_print "$UIDS" | grep '\[' >/dev/null 2>&1 || UIDS=$(_print "[$UIDS]")
-	[ "$BIG_IMAGE" ] && BIG_IMAGE=$(_print -en "$BIG_IMAGE")
-	[ "$RPN_TITLE_1" ] && RPN_TITLE_1=$(_print -en "$RPN_TITLE_1")
-	[ "$RPN_TITLE_2" ] && RPN_TITLE_2=$(_print -en "$RPN_TITLE_2")
-	[ "$RPN_TITLE_3" ] && RPN_TITLE_3=$(_print -en "$RPN_TITLE_3")
-	[ "$RPN_URL_1" ] && RPN_URL_1=$(_print -en "$RPN_URL_1")
-	[ "$RPN_URL_2" ] && RPN_URL_2=$(_print -en "$RPN_URL_2")
-	[ "$RPN_URL_3" ] && RPN_URL_3=$(_print -en "$RPN_URL_3")
+	[ "$BIG_IMAGE" ] && BIG_IMAGE=$(_print -en "$BIG_IMAGE" | eval "$JSON_AWK_LINE")
+	[ "$RPN_TITLE_1" ] && RPN_TITLE_1=$(_print -en "$RPN_TITLE_1" | eval "$JSON_AWK_LINE")
+	[ "$RPN_TITLE_2" ] && RPN_TITLE_2=$(_print -en "$RPN_TITLE_2" | eval "$JSON_AWK_LINE")
+	[ "$RPN_TITLE_3" ] && RPN_TITLE_3=$(_print -en "$RPN_TITLE_3" | eval "$JSON_AWK_LINE")
+	[ "$RPN_URL_1" ] && RPN_URL_1=$(_print -en "$RPN_URL_1" | eval "$JSON_AWK_LINE")
+	[ "$RPN_URL_2" ] && RPN_URL_2=$(_print -en "$RPN_URL_2" | eval "$JSON_AWK_LINE")
+	[ "$RPN_URL_3" ] && RPN_URL_3=$(_print -en "$RPN_URL_3" | eval "$JSON_AWK_LINE")
 
 	[ "$RPN_TITLE_1" ] && [ "$RPN_URL_1" ] && RPN_BODY="{\\\"title\\\":\\\"$RPN_TITLE_1\\\",\\\"url\\\":\\\"$RPN_URL_1\\\"},";
 	[ "$RPN_TITLE_2" ] && [ "$RPN_URL_2" ] && RPN_BODY="$RPN_BODY{\\\"title\\\":\\\"$RPN_TITLE_2\\\",\\\"url\\\":\\\"$RPN_URL_2\\\"},";
 	[ "$RPN_TITLE_3" ] && [ "$RPN_URL_3" ] && RPN_BODY="$RPN_BODY{\\\"title\\\":\\\"$RPN_TITLE_3\\\",\\\"url\\\":\\\"$RPN_URL_3\\\"},";
 
-	RPN_BODY=$(_print -e "$RPN_BODY" | sed 's/,$//');
+	RPN_BODY=$(_print "$RPN_BODY" | sed 's/,$//');
 	[ "$RPN_BODY" ] && RPN_BODY="[$RPN_BODY]";
 
 	PARAMLINE="--data-urlencode \"id=$PUSHALL_ID\" --data-urlencode \"key=$PUSHALL_KEY\" --data-urlencode \"title=$TITLE\" --data-urlencode \"text=$TEXT\" --data-urlencode \"uids=$UIDS\""
@@ -409,7 +410,6 @@ _multicast_api_call () {
 		PARAMLINE="$PARAMLINE --data-urlencode \"filter=$FILTER\""
 	fi
 	if [ "$BIG_IMAGE" -a "$RPN_BODY" ]; then
-		BIG_IMAGE=$(_print -en "$BIG_IMAGE" | sed 's/\//\\\//g')
 		RPN_JSON="{\\\"bigimage\\\":\\\"$BIG_IMAGE\\\",\\\"actions\\\":$RPN_BODY}"
 		PARAMLINE="$PARAMLINE --data-urlencode \"additional=$RPN_JSON\""
 	fi
@@ -454,19 +454,19 @@ _unicast_api_call () {
 	[ "$ENCODE" ] && ENCODE=$(_print -en "$ENCODE")
 	[ "$FILTER" ] && FILTER=$(_print -en "$FILTER")
 	[ "$UIDS" ] && UIDS=$(_print -en "$UIDS")
-	[ "$BIG_IMAGE" ] && BIG_IMAGE=$(_print -en "$BIG_IMAGE")
-	[ "$RPN_TITLE_1" ] && RPN_TITLE_1=$(_print -en "$RPN_TITLE_1")
-	[ "$RPN_TITLE_2" ] && RPN_TITLE_2=$(_print -en "$RPN_TITLE_2")
-	[ "$RPN_TITLE_3" ] && RPN_TITLE_3=$(_print -en "$RPN_TITLE_3")
-	[ "$RPN_URL_1" ] && RPN_URL_1=$(_print -en "$RPN_URL_1")
-	[ "$RPN_URL_2" ] && RPN_URL_2=$(_print -en "$RPN_URL_2")
-	[ "$RPN_URL_3" ] && RPN_URL_3=$(_print -en "$RPN_URL_3")
+	[ "$BIG_IMAGE" ] && BIG_IMAGE=$(_print -en "$BIG_IMAGE" | eval "$JSON_AWK_LINE")
+	[ "$RPN_TITLE_1" ] && RPN_TITLE_1=$(_print -en "$RPN_TITLE_1" | eval "$JSON_AWK_LINE")
+	[ "$RPN_TITLE_2" ] && RPN_TITLE_2=$(_print -en "$RPN_TITLE_2" | eval "$JSON_AWK_LINE")
+	[ "$RPN_TITLE_3" ] && RPN_TITLE_3=$(_print -en "$RPN_TITLE_3" | eval "$JSON_AWK_LINE")
+	[ "$RPN_URL_1" ] && RPN_URL_1=$(_print -en "$RPN_URL_1" | eval "$JSON_AWK_LINE")
+	[ "$RPN_URL_2" ] && RPN_URL_2=$(_print -en "$RPN_URL_2" | eval "$JSON_AWK_LINE")
+	[ "$RPN_URL_3" ] && RPN_URL_3=$(_print -en "$RPN_URL_3" | eval "$JSON_AWK_LINE")
 
 	[ "$RPN_TITLE_1" ] && [ "$RPN_URL_1" ] && RPN_BODY="{\\\"title\\\":\\\"$RPN_TITLE_1\\\",\\\"url\\\":\\\"$RPN_URL_1\\\"},";
 	[ "$RPN_TITLE_2" ] && [ "$RPN_URL_2" ] && RPN_BODY="$RPN_BODY{\\\"title\\\":\\\"$RPN_TITLE_2\\\",\\\"url\\\":\\\"$RPN_URL_2\\\"},";
 	[ "$RPN_TITLE_3" ] && [ "$RPN_URL_3" ] && RPN_BODY="$RPN_BODY{\\\"title\\\":\\\"$RPN_TITLE_3\\\",\\\"url\\\":\\\"$RPN_URL_3\\\"},";
 
-	RPN_BODY=$(_print -e "$RPN_BODY" | sed 's/,$//');
+	RPN_BODY=$(_print "$RPN_BODY" | sed 's/,$//');
 	[ "$RPN_BODY" ] && RPN_BODY="[$RPN_BODY]";
 
 	PARAMLINE="--data-urlencode \"id=$PUSHALL_ID\" --data-urlencode \"key=$PUSHALL_KEY\" --data-urlencode \"title=$TITLE\" --data-urlencode \"text=$TEXT\" --data-urlencode \"uid=$UIDS\""
@@ -493,7 +493,6 @@ _unicast_api_call () {
 		PARAMLINE="$PARAMLINE --data-urlencode \"filter=$FILTER\""
 	fi
 	if [ "$BIG_IMAGE" -a "$RPN_BODY" ]; then
-		BIG_IMAGE=$(_print -en "$BIG_IMAGE" | sed 's/\//\\\//g')
 		RPN_JSON="{\\\"bigimage\\\":\\\"$BIG_IMAGE\\\",\\\"actions\\\":$RPN_BODY}"
 		PARAMLINE="$PARAMLINE --data-urlencode \"additional=$RPN_JSON\""
 	fi
